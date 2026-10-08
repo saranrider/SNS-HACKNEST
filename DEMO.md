@@ -14,6 +14,6 @@ Before you start: run the server (`cd server && npm start`), open `http://localh
 ## If a judge asks
 
 - **Is the data real?** No. Every name, mark and count is sample data.
-- **How is it stored?** In a JSON file on the server. A database is the next step.
+- **How is it stored?** In a SQLite database on the server, with a table for each kind of record. A database server such as PostgreSQL is the next step.
 - **Is the project matching done on images?** Not yet. It compares title and abstract keywords; the graphical abstract is attached but not compared.
 - **What about security?** Passwords are hashed on the server, each route checks the role, sign-in locks for a minute after five wrong attempts, and actions go to an audit log. Opened without the server, the pages only imitate sign-in in the browser.
