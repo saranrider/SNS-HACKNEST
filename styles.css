@@ -799,12 +799,6 @@ td {
   line-height: 1.2;
 }
 
-.front-title p {
-  margin-top: 4px;
-  font-size: 17px;
-  color: #e3edfc;
-}
-
 /* the white card overlaps the blue band */
 .front-card {
   display: flex;
