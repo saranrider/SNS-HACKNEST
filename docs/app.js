@@ -27,7 +27,7 @@ const accounts = [
 
 function currentSession() {
   try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY));
+    return JSON.parse(sessionStorage.getItem(SESSION_KEY));
   } catch (error) {
     return null;
   }
@@ -35,7 +35,7 @@ function currentSession() {
 
 function signOut() {
   try {
-    localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
   } catch (error) {
     // nothing stored
   }
@@ -49,7 +49,6 @@ function signOut() {
 // records. Opened as plain files, or from a host with no server, the pages
 // fall back to keeping everything in this browser.
 const API_BASE = window.CMS_API_BASE || "";
-const EMBED_TOKEN_KEY = "cms-embed-token-";
 const POLL_MS = 3000;
 let backendOnline = false;
 let actionsInFlight = 0;
@@ -66,16 +65,7 @@ async function connectBackend() {
   return backendOnline;
 }
 
-// A signed-in page keeps its token with the session. A pane of the
-// side-by-side view keeps one per role for as long as the tab is open.
 function apiToken() {
-  if (isEmbedded()) {
-    try {
-      return sessionStorage.getItem(EMBED_TOKEN_KEY + document.body.dataset.role) || "";
-    } catch (error) {
-      return "";
-    }
-  }
   const session = currentSession();
   return (session && session.token) || "";
 }
@@ -90,35 +80,19 @@ async function api(method, path, body) {
   return { ok: response.ok, status: response.status, data };
 }
 
-// Makes sure this page has a server session before it asks for records.
-async function ensureServerSession() {
+// A page that was signed in before the server was reachable has no token:
+// ask for a proper sign-in.
+function ensureServerSession() {
   if (apiToken()) return true;
-
-  // signed in before the server was reachable: ask for a proper sign-in
-  if (!isEmbedded()) {
-    signOut();
-    return false;
-  }
-
-  // the side-by-side view has no sign-in step, so each pane uses the demo
-  // account of the role it shows
-  const role = document.body.dataset.role;
-  const account = accounts.find((item) => item.role === role);
-  const response = await api("POST", "/api/login", { id: account.id, password: DEMO_PASSWORD });
-  if (!response.ok) return false;
-  try {
-    sessionStorage.setItem(EMBED_TOKEN_KEY + role, response.data.token);
-  } catch (error) {
-    return false;
-  }
-  return true;
+  signOut();
+  return false;
 }
 
 // Copies the server's records into this browser. Returns true if they differ
 // from what the page was showing.
 async function pullState() {
   const response = await api("GET", "/api/state");
-  if (response.status === 401 && !isEmbedded()) {
+  if (response.status === 401) {
     signOut();
     return false;
   }
@@ -128,7 +102,7 @@ async function pullState() {
   const changed = JSON.stringify(loadState()) !== fresh;
   if (changed) {
     try {
-      localStorage.setItem(STORE_KEY, fresh);
+      recordStore().setItem(STORE_KEY, fresh);
     } catch (error) {
       return false;
     }
@@ -159,12 +133,12 @@ async function sendAction(path, body) {
   if (response.ok) {
     // keep exactly what the server now holds, then redraw anything that lists it
     try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(response.data));
+      recordStore().setItem(STORE_KEY, JSON.stringify(response.data));
     } catch (error) {
       // the next poll will bring it in
     }
     renderTickets();
-    notifySplitView();
+    renderNotifications();
     return;
   }
   await pullState();
@@ -191,10 +165,17 @@ function showBackendStatus() {
   foot.append(el("span", "backend-status" + (backendOnline ? " online" : ""), text));
 }
 
+// With a server, each role is sent only its own share of the records, so a
+// copy is kept per tab. Without one, the copy is shared by the whole browser
+// so that one role's action is there when the next role signs in.
+function recordStore() {
+  return backendOnline ? sessionStorage : localStorage;
+}
+
 function loadState() {
-  const state = { odApproved: [], feePaid: false, tickets: [] };
+  const state = { odApproved: [], feePaid: false, tickets: [], decisions: [], notifications: [] };
   try {
-    Object.assign(state, JSON.parse(localStorage.getItem(STORE_KEY)) || {});
+    Object.assign(state, JSON.parse(recordStore().getItem(STORE_KEY)) || {});
   } catch (error) {
     // storage blocked or corrupted: carry on with the defaults
   }
@@ -203,23 +184,9 @@ function loadState() {
 
 function saveState(state) {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    recordStore().setItem(STORE_KEY, JSON.stringify(state));
   } catch (error) {
     // the page still works for this visit, it just will not carry over
-  }
-  if (!backendOnline) notifySplitView();
-}
-
-// A dashboard shown inside the side-by-side view is loaded with ?embed=split.
-function isEmbedded() {
-  return new URLSearchParams(window.location.search).get("embed") === "split";
-}
-
-// Tells the side-by-side view that something changed, so it can refresh
-// the dashboard in the other pane.
-function notifySplitView() {
-  if (window.parent !== window) {
-    window.parent.postMessage("cms-state-changed", "*");
   }
 }
 
@@ -523,8 +490,10 @@ function renderStudentStatus(record) {
   setStatus("ticket", "ticket", blocked === 0 ? "ready" : "");
 
   if (blocked === 0) {
-    setText("ht-status", "Ready to issue");
-    setStatus("ht-hint", "hint", "", "Both conditions met");
+    const issued = loadState().decisions.includes("hallticket.devi");
+    if (issued) setText("hero-line", "You are clear. Your hall ticket has been issued.");
+    setText("ht-status", issued ? "Issued" : "Ready to issue");
+    setStatus("ht-hint", "hint", "", issued ? "Issued by the COE" : "Both conditions met · waiting for the COE to issue");
   } else {
     setText("ht-status", "On hold");
     setStatus("ht-hint", "hint", "stop", blocked + (blocked === 1 ? " condition" : " conditions") + " not met");
@@ -655,10 +624,6 @@ function renderOdApprovals() {
     const action = el("td");
     const showApproved = () => {
       action.replaceChildren(el("span", "pill ok", "Approved · record updated"));
-      if (request.student === DEMO_STUDENT) {
-        action.append(followUpLink("student#od", "See it on the Student page"));
-        setUpFollowUps(action);
-      }
     };
 
     if (state.odApproved.includes(request.student)) {
@@ -668,6 +633,10 @@ function renderOdApprovals() {
       button.type = "button";
       button.addEventListener("click", () => {
         state.odApproved.push(request.student);
+        if (request.student === DEMO_STUDENT) {
+          addNote(state, "student", "Your OD request was approved by " + currentUserName() + ". Your attendance has been updated.");
+          noteIfReady(state);
+        }
         saveState(state);
         showApproved();
         renderOverview();
@@ -750,11 +719,7 @@ function renderFees() {
 
   const state = loadState();
   const showPaid = () => {
-    slot.replaceChildren(
-      el("span", "pill ok", "Paid · accounts desk cleared"),
-      followUpLink("student#nodues", "See it on the Student page")
-    );
-    setUpFollowUps(slot);
+    slot.replaceChildren(el("span", "pill ok", "Paid · accounts desk cleared"));
   };
 
   if (state.feePaid) {
@@ -766,6 +731,8 @@ function renderFees() {
   button.type = "button";
   button.addEventListener("click", () => {
     state.feePaid = true;
+    addNote(state, "student", "Your fee payment was recorded. The accounts desk has cleared your dues.");
+    noteIfReady(state);
     saveState(state);
     showPaid();
     renderDesks();
@@ -790,7 +757,9 @@ function renderHallTickets() {
 
   setStatus("coe-attendance", "mono", record.attendanceOk ? "" : "text-stop", percent(record.attended, record.held));
   setStatus("coe-dues", "", duesDone ? "" : "text-wait", record.desksCleared + " of " + DESK_COUNT + " desks");
-  setStatus("coe-status", "pill", onHold ? "stop" : "ok", onHold ? "On hold · " + reasons.join(", ") : "Ready to issue");
+  const issued = loadState().decisions.includes("hallticket.devi");
+  const ready = issued ? "Issued" : "Ready to issue";
+  setStatus("coe-status", "pill", onHold ? "stop" : "ok", onHold ? "On hold · " + reasons.join(", ") : ready);
 }
 
 /* ---------- sign in and page access ---------- */
@@ -802,15 +771,6 @@ function guardPage() {
   if (!role) return true;
 
   const slot = document.getElementById("session");
-
-  // The side-by-side presenter view shows a dashboard without signing in,
-  // as the demo account for that role. It has no Sign out button.
-  if (isEmbedded()) {
-    const account = accounts.find((item) => item.role === role);
-    document.body.classList.add("embedded");
-    if (slot) slot.append(el("span", "session-user", account.name + " · " + account.title));
-    return true;
-  }
 
   const session = currentSession();
   if (!session || session.role !== role) {
@@ -844,6 +804,9 @@ function setUpLogin() {
   const error = document.getElementById("login-error");
   const list = document.getElementById("demo-accounts");
 
+  // the portal picked in step 1; a sign-in for any other role is refused
+  let chosenRole = "";
+
   accounts.forEach((account) => {
     const button = el("button", "role-tile");
     button.type = "button";
@@ -854,13 +817,12 @@ function setUpLogin() {
     button.append(
       picture,
       el("strong", "", account.title),
-      el("span", "", account.about),
-      el("span", "mono", "ID: " + account.id)
+      el("span", "", account.about)
     );
     button.addEventListener("click", () => {
-      userId.value = account.id;
-      password.value = DEMO_PASSWORD;
+      chosenRole = account.role;
       error.textContent = "";
+      userId.focus();
       list.querySelectorAll(".role-tile").forEach((tile) => {
         const chosen = tile === button;
         tile.classList.toggle("selected", chosen);
@@ -873,6 +835,12 @@ function setUpLogin() {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const typed = userId.value.trim().toLowerCase();
+    if (!chosenRole) {
+      error.textContent = "Choose who is signing in first.";
+      return;
+    }
+    const wrongPortal =
+      "This account does not belong to the " + accounts.find((item) => item.role === chosenRole).title + " sign-in.";
 
     // with a server, the password is checked there and never in this file
     if (backendOnline) {
@@ -882,7 +850,12 @@ function setUpLogin() {
         return;
       }
       const user = response.data;
-      localStorage.setItem(
+      if (user.role !== chosenRole) {
+        await fetch(API_BASE + "/api/logout", { method: "POST", headers: { Authorization: "Bearer " + user.token } }).catch(() => null);
+        error.textContent = wrongPortal;
+        return;
+      }
+      sessionStorage.setItem(
         SESSION_KEY,
         JSON.stringify({ role: user.role, name: user.name, title: user.title, token: user.token })
       );
@@ -894,12 +867,17 @@ function setUpLogin() {
 
     // one message for both cases, so the page does not reveal which IDs exist
     if (!account || password.value !== DEMO_PASSWORD) {
-      error.textContent = "User ID or password is not correct. Use one of the demo accounts.";
+      error.textContent = "User ID or password is not correct.";
+      return;
+    }
+
+    if (account.role !== chosenRole) {
+      error.textContent = wrongPortal;
       return;
     }
 
     try {
-      localStorage.setItem(
+      sessionStorage.setItem(
         SESSION_KEY,
         JSON.stringify({ role: account.role, name: account.name, title: account.title })
       );
@@ -908,69 +886,6 @@ function setUpLogin() {
       return;
     }
     window.location.href = account.page;
-  });
-}
-
-/* ---------- side-by-side view ---------- */
-
-// Two panes, each with a row of role tabs and a frame showing that role's
-// dashboard. An action in one pane reloads the other so the effect shows.
-function setUpSplitView() {
-  const panes = document.querySelectorAll(".pane");
-  if (panes.length === 0) return;
-
-  const frames = [];
-  const showers = [];
-  const params = new URLSearchParams(window.location.search);
-
-  panes.forEach((pane) => {
-    const tabs = pane.querySelector(".pane-tabs");
-    const frame = pane.querySelector("iframe");
-    frames.push(frame);
-
-    const show = (account, section) => {
-      frame.src = account.page + "?embed=split" + (section ? "#" + section : "");
-      tabs.querySelectorAll("button").forEach((button) => {
-        const active = button.dataset.role === account.role;
-        button.classList.toggle("active", active);
-        button.setAttribute("aria-selected", active);
-      });
-    };
-
-    accounts.forEach((account) => {
-      const button = el("button", "", account.title);
-      button.type = "button";
-      button.dataset.role = account.role;
-      button.setAttribute("role", "tab");
-      button.addEventListener("click", () => show(account));
-      tabs.append(button);
-    });
-
-    // split.html?left=student&right=staff&focus=od opens a follow-up directly
-    const side = panes[0] === pane ? "left" : "right";
-    const wanted = accounts.find((account) => account.role === params.get(side));
-    const start = wanted || accounts.find((account) => account.role === pane.dataset.start);
-    show(start, side === "right" ? params.get("focus") : "");
-    showers.push(show);
-  });
-
-  window.addEventListener("message", (event) => {
-    const from = frames.findIndex((frame) => frame.contentWindow === event.source);
-    if (from < 0) return;
-
-    // a follow-up clicked in one pane opens its page in the other pane
-    if (event.data && event.data.type === "cms-followup") {
-      const account = accounts.find((item) => item.role === event.data.role);
-      if (account) showers[from === 0 ? 1 : 0](account, event.data.section);
-      return;
-    }
-    if (event.data !== "cms-state-changed") return;
-    frames.forEach((frame) => {
-      // only our own frames can trigger a refresh, and the sender is skipped
-      if (frame.contentWindow !== event.source && frames.some((f) => f.contentWindow === event.source)) {
-        frame.src = frame.src;
-      }
-    });
   });
 }
 
@@ -1095,14 +1010,28 @@ function coeOverview(state) {
   ];
   const held = countState(hallTickets, "bad");
 
+  // an item is done once its approval has been given on this page
+  const given = (items, keys) =>
+    items.map((item, index) => {
+      const key = keys[index];
+      if (!key || !state.decisions.includes(key)) return item;
+      return { label: item.label.split(" · ").slice(0, -1).join(" · ") + " · done", state: "done" };
+    });
+  const syllabi = given(examPipeline.syllabi, [null, "syllabus.ds", "syllabus.se"]);
+  const certificates = given(examPipeline.certificates, [null, "cert.lakshmi", "cert.suresh"]);
+  const toReview = countState(syllabi, "todo");
+  const toVerify = countState(certificates, "todo");
+  const syllabusLine =
+    toReview === 0 ? "every syllabus is approved." : toReview + (toReview === 1 ? " syllabus is" : " syllabi are") + " waiting for approval.";
+
   return {
-    line: held + (held === 1 ? " hall ticket is" : " hall tickets are") + " on hold, and 2 syllabi are waiting for approval.",
+    line: held + (held === 1 ? " hall ticket is" : " hall tickets are") + " on hold, and " + syllabusLine,
     trackers: [
-      tracker("Syllabi approved", examPipeline.syllabi, "2 to review", "wait"),
+      tracker("Syllabi approved", syllabi, toReview ? toReview + " to review" : "Nothing waiting", toReview ? "wait" : ""),
       tracker("Papers through scrutiny", examPipeline.papers, "1 returned to staff", "stop"),
       tracker("Hall tickets ready", hallTickets, held + " on hold", "stop"),
       tracker("Results published", examPipeline.results, "Next: internal assessment 2", ""),
-      tracker("Certificates verified", examPipeline.certificates, "2 sent by the admin desk", "wait"),
+      tracker("Certificates verified", certificates, toVerify ? toVerify + " sent by the admin desk" : "Nothing waiting", toVerify ? "wait" : ""),
     ],
   };
 }
@@ -1158,7 +1087,6 @@ function renderOverview() {
 /* ---------- queries and campus issues (support tickets) ---------- */
 
 function currentUserName() {
-  if (isEmbedded()) return accounts.find((item) => item.role === document.body.dataset.role).name;
   const session = currentSession();
   return session ? session.name : "";
 }
@@ -1168,6 +1096,7 @@ function currentUserName() {
 function addTicket(text, owner) {
   const state = loadState();
   state.tickets.push({ id: "local-" + Date.now(), text, owner, raisedBy: currentUserName(), status: "open" });
+  addNote(state, "admin", "New request from " + currentUserName() + ": " + text);
   saveState(state);
   sendAction("/api/tickets", { text, owner });
 }
@@ -1177,6 +1106,8 @@ function closeTicket(id) {
   const ticket = state.tickets.find((item) => item.id === id);
   if (!ticket) return;
   ticket.status = "closed";
+  const raiser = accounts.find((item) => item.name === ticket.raisedBy);
+  if (raiser) addNote(state, raiser.role, "Your request was resolved by the support desk: " + ticket.text);
   saveState(state);
   sendAction("/api/tickets/close", { id });
 }
@@ -1213,10 +1144,6 @@ function renderTickets() {
       row.append(label, el("span", "pill " + (open ? "wait" : "ok"), open ? "Open" : "Closed"));
       mine.append(row);
     });
-    if (own.length > 0) {
-      mine.append(followUpLink("admin#support", "See it at the support desk"));
-      setUpFollowUps(mine);
-    }
   }
 
   // the support desk sees every ticket and can close it
@@ -1245,48 +1172,212 @@ function renderTickets() {
   }
 }
 
-/* ---------- follow-up links ---------- */
+/* ---------- notifications ---------- */
 
-// An element marked data-followup="role#section" is clickable. It opens the
-// side-by-side view with this page on the left and, on the right, the page
-// and section where the next step of that item happens.
-function openFollowUp(target) {
-  const [role, section] = target.split("#");
-  if (isEmbedded()) {
-    window.parent.postMessage({ type: "cms-followup", role, section: section || "" }, "*");
+// Without a server the page writes the messages itself; with one, the
+// server writes them and these local copies are replaced by its reply.
+function addNote(state, toRole, text) {
+  state.notifications.unshift({ id: "local-" + Date.now() + "-" + state.notifications.length, to: toRole, text, read: false });
+}
+
+function noteIfReady(state) {
+  if (!state.feePaid || !state.odApproved.includes(DEMO_STUDENT)) return;
+  addNote(state, "student", "Your hall ticket is ready to issue: attendance and dues are both clear.");
+  addNote(state, "coe", DEMO_STUDENT + " is now eligible. The hall ticket is ready to issue.");
+}
+
+function myNotifications() {
+  const role = document.body.dataset.role;
+  return loadState().notifications.filter((item) => item.to === role);
+}
+
+async function markNotificationsRead() {
+  if (backendOnline) {
+    const response = await api("POST", "/api/notifications/read").catch(() => null);
+    if (response && response.ok) recordStore().setItem(STORE_KEY, JSON.stringify(response.data));
     return;
   }
-  const here = document.body.dataset.role;
-  const focus = section ? "&focus=" + section : "";
-  window.location.href = "split.html?left=" + here + "&right=" + role + focus;
+  const role = document.body.dataset.role;
+  const state = loadState();
+  state.notifications.forEach((item) => {
+    if (item.to === role) item.read = true;
+  });
+  saveState(state);
 }
 
+// A bell in the top bar with the unread count, a list that opens under it,
+// and a pop-up for anything that arrived since this tab last looked.
+function renderNotifications() {
+  const slot = document.getElementById("session");
+  if (!slot || !document.body.dataset.role) return;
+
+  const notes = myNotifications();
+  const unread = notes.filter((item) => !item.read);
+
+  let bell = document.getElementById("bell");
+  if (!bell) {
+    bell = el("button", "bell");
+    bell.id = "bell";
+    bell.type = "button";
+    bell.setAttribute("aria-expanded", "false");
+    const panel = el("div", "bell-panel");
+    panel.id = "bell-panel";
+    panel.hidden = true;
+    bell.addEventListener("click", async () => {
+      panel.hidden = !panel.hidden;
+      bell.setAttribute("aria-expanded", String(!panel.hidden));
+      if (!panel.hidden) {
+        await markNotificationsRead();
+        bell.textContent = "Notifications";
+        bell.classList.remove("has-unread");
+      }
+    });
+    slot.prepend(bell, panel);
+  }
+  bell.textContent = unread.length > 0 ? "Notifications (" + unread.length + ")" : "Notifications";
+  bell.classList.toggle("has-unread", unread.length > 0);
+
+  const panel = document.getElementById("bell-panel");
+  panel.replaceChildren();
+  if (notes.length === 0) panel.append(el("p", "muted", "Nothing yet. You are told here as soon as someone acts on your request."));
+  notes.forEach((item) => {
+    const row = el("p", item.read ? "" : "unread", item.text);
+    if (item.at) row.append(el("span", "detail", new Date(item.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })));
+    panel.append(row);
+  });
+
+  // pop up each unread message once per tab
+  let shown = [];
+  try {
+    shown = JSON.parse(sessionStorage.getItem("cms-toasted")) || [];
+  } catch (error) {
+    shown = [];
+  }
+  const fresh = unread.filter((item) => !shown.includes(String(item.id)));
+  if (fresh.length === 0) return;
+  let stack = document.getElementById("toasts");
+  if (!stack) {
+    stack = el("div", "toasts");
+    stack.id = "toasts";
+    stack.setAttribute("role", "status");
+    document.body.append(stack);
+  }
+  fresh.forEach((item) => {
+    const toast = el("div", "toast", item.text);
+    stack.append(toast);
+    setTimeout(() => toast.remove(), 8000);
+  });
+  try {
+    sessionStorage.setItem("cms-toasted", JSON.stringify(shown.concat(fresh.map((item) => String(item.id))).slice(-60)));
+  } catch (error) {
+    // the message may pop up again after a reload; harmless
+  }
+}
+
+/* ---------- single-step approvals ---------- */
+
+// Who is told when each approval is given. The server holds the same list
+// and is the one that counts; this copy is used when there is no server.
+const approvals = {
+  "syllabus.ds": [["staff", "The COE approved the Data Structures syllabus."]],
+  "syllabus.se": [["staff", "The COE approved the Software Engineering syllabus."]],
+  "cert.lakshmi": [
+    ["admin", "Marks verified for the transcript of Lakshmi V. It is ready to issue."],
+    ["alumni", "The COE has verified your marks. Your transcript is now with the admin desk."],
+  ],
+  "cert.suresh": [["admin", "Marks verified for the course completion certificate of Suresh N. It is ready to issue."]],
+  "cert.lakshmi.issue": [["alumni", "Your transcript has been issued. You can download it with its QR code."]],
+  "cert.anitha.issue": [],
+  "hallticket.devi": [["student", "Your hall ticket has been issued by the COE."]],
+  "project.devi": [["student", "Saran accepted your proposal. You can continue the 2024 face recognition attendance project."]],
+  "fees.remind": [["student", "Reminder from the accounts desk: your exam fee is due and is holding your hall ticket."]],
+};
+
+// A reason the approval cannot be given yet, or "" if it can.
+function approvalBlocked(key) {
+  if (key !== "hallticket.devi") return "";
+  const record = studentRecord(loadState());
+  const ready = record.attendanceOk && record.desksCleared === DESK_COUNT;
+  return ready ? "" : "Nobody new is eligible yet. " + DEMO_STUDENT + " is still on hold.";
+}
+
+// <button data-action="key" data-done="text"> gives an approval.
+// data-needs="other key" keeps it back until an earlier step is done.
+// <span data-shows="key" data-done="text"> reflects one given by someone else.
+function renderApprovals() {
+  const done = loadState().decisions;
+
+  document.querySelectorAll("[data-shows]").forEach((node) => {
+    if (!done.includes(node.dataset.shows)) return;
+    node.className = "pill ok";
+    node.textContent = node.dataset.done;
+    node.removeAttribute("data-followup");
+    node.removeAttribute("title");
+  });
+
+  document.querySelectorAll("[data-action]").forEach((button) => {
+    const key = button.dataset.action;
+    if (done.includes(key)) {
+      button.replaceWith(el("span", "pill ok", button.dataset.done));
+      return;
+    }
+    if (button.dataset.needs && !done.includes(button.dataset.needs)) {
+      button.hidden = true;
+      if (!button.nextElementSibling) button.after(el("span", "pill wait", button.dataset.waiting));
+      return;
+    }
+    button.hidden = false;
+    if (button.nextElementSibling) button.nextElementSibling.remove();
+    if (button.dataset.ready) return;
+    button.dataset.ready = "yes";
+    button.addEventListener("click", () => {
+      const blocked = approvalBlocked(key);
+      if (blocked) {
+        window.alert(blocked);
+        return;
+      }
+      const state = loadState();
+      state.decisions.push(key);
+      approvals[key].forEach(([role, text]) => addNote(state, role, text));
+      saveState(state);
+      renderApprovals();
+      renderHallTickets();
+      renderOverview();
+      sendAction("/api/decisions", { key });
+    });
+  });
+
+  // alumni: the certificate tracker moves on as each office acts
+  const steps = document.querySelectorAll("#certificate .steps li");
+  if (steps.length === 5) {
+    const verified = done.includes("cert.lakshmi");
+    const issued = done.includes("cert.lakshmi.issue");
+    if (verified) {
+      steps[2].className = "done";
+      steps[2].querySelector("small").textContent = "Step 3 · Done";
+      steps[2].removeAttribute("data-followup");
+      steps[2].removeAttribute("title");
+      steps[3].className = issued ? "done" : "current";
+      steps[3].querySelector("small").textContent = issued ? "Step 4 · Done" : "Step 4 · With the admin desk";
+    }
+    if (issued) {
+      steps[4].className = "current";
+      steps[4].querySelector("small").textContent = "Step 5 · Ready";
+    }
+  }
+}
+
+/* ---------- who handles the next step ---------- */
+
+// An element marked data-followup="role#section" is waiting on another
+// role. Nobody can open another role's page, so the element only says who
+// has the next step.
 function setUpFollowUps(root) {
   (root || document).querySelectorAll("[data-followup]").forEach((node) => {
-    if (node.dataset.followupReady) return;
-    node.dataset.followupReady = "yes";
-
     const role = node.dataset.followup.split("#")[0];
     const account = accounts.find((item) => item.role === role);
-    node.title = "Follow-up: opens the " + account.title + " page";
-    node.addEventListener("click", () => openFollowUp(node.dataset.followup));
-
-    // pills and steps are not buttons, so make them reachable by keyboard too
-    if (node.tagName !== "BUTTON") {
-      node.tabIndex = 0;
-      node.setAttribute("role", "link");
-      node.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") openFollowUp(node.dataset.followup);
-      });
-    }
+    node.title = "Next step is with " + account.title;
   });
-}
-
-function followUpLink(target, label) {
-  const button = el("button", "link-button", label);
-  button.type = "button";
-  button.dataset.followup = target;
-  return button;
 }
 
 function setUpReset() {
@@ -1295,11 +1386,10 @@ function setUpReset() {
   button.addEventListener("click", async () => {
     if (backendOnline) await api("POST", "/api/reset").catch(() => null);
     try {
-      localStorage.removeItem(STORE_KEY);
+      recordStore().removeItem(STORE_KEY);
     } catch (error) {
       // nothing stored, nothing to clear
     }
-    notifySplitView();
     window.location.reload();
   });
 }
@@ -1310,7 +1400,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // dashboards load the shared records before drawing anything
   const online = await connectBackend();
   if (online && document.body.dataset.role) {
-    if (!(await ensureServerSession())) return;
+    if (!ensureServerSession()) return;
     await pullState();
     await pullRecords();
     startPolling();
@@ -1318,10 +1408,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   showBackendStatus();
 
   setUpLogin();
-  setUpSplitView();
   setUpReset();
   renderOverview();
   setUpFollowUps();
+  renderApprovals();
+  renderNotifications();
+
+  // without a server, another tab of this browser may act: pick that up at once
+  window.addEventListener("storage", (event) => {
+    if (!backendOnline && event.key === STORE_KEY) window.location.reload();
+  });
   setUpTicketForm("query-send", "query-text", () => document.getElementById("query-desk").value);
   setUpTicketForm("issue-send", "issue-text", () => "Support desk");
   renderTickets();

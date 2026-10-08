@@ -42,8 +42,8 @@
         <section class="card" id="syllabus">
           <h2>Syllabus and blueprint approval</h2>
           <p class="sub">Staff submit the syllabus. The approved version sets unit weightage for every question paper.</p>
-          <div class="row"><span>Data Structures · Saran</span><button type="button" class="btn" data-followup="staff#syllabus">Review</button></div>
-          <div class="row"><span>Software Engineering · Mr. Ravi T</span><button type="button" class="btn" data-followup="staff#syllabus">Review</button></div>
+          <div class="row"><span>Data Structures · Saran</span><button type="button" class="btn" data-action="syllabus.ds" data-done="Approved · staff notified">Approve</button></div>
+          <div class="row"><span>Software Engineering · Mr. Ravi T</span><button type="button" class="btn" data-action="syllabus.se" data-done="Approved · staff notified">Approve</button></div>
           <div class="row"><span>Database Systems · Saran</span><span class="pill ok">Approved · 20 marks per unit</span></div>
         </section>
 
@@ -62,7 +62,7 @@
             <h2>Hall ticket issue</h2>
             <p class="sub">Eligibility is read from the attendance record and the no dues clearance. Nothing is typed in again.</p>
           </div>
-          <button type="button" class="btn" data-followup="student#hallticket">Issue to all eligible</button>
+          <button type="button" class="btn" data-action="hallticket.devi" data-done="Issued · students notified">Issue to all eligible</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -92,8 +92,8 @@
         <section class="card" id="certificates">
           <h2>Academic certificate approval</h2>
           <p class="sub">The admin desk issues a certificate only after marks are verified here.</p>
-          <div class="row"><span>Transcript · Lakshmi V · alumna, 2022 batch</span><button type="button" class="btn" data-followup="admin#certificates">Verify marks</button></div>
-          <div class="row"><span>Course completion · Suresh N · 2025 batch</span><button type="button" class="btn" data-followup="admin#certificates">Verify marks</button></div>
+          <div class="row"><span>Transcript · Lakshmi V · alumna, 2022 batch</span><button type="button" class="btn" data-action="cert.lakshmi" data-done="Verified · admin notified">Verify marks</button></div>
+          <div class="row"><span>Course completion · Suresh N · 2025 batch</span><button type="button" class="btn" data-action="cert.suresh" data-done="Verified · admin notified">Verify marks</button></div>
           <div class="row"><span>Consolidated marksheet · Anitha J</span><span class="pill ok" data-followup="admin#certificates">Verified · back with admin</span></div>
         </section>
       </div>
@@ -102,7 +102,7 @@
 
   <footer class="page-foot">
     <button type="button" class="btn outline" id="reset-demo">Reset demo data</button>
-    <span class="muted">Actions taken on one role's page carry over to the other pages in this browser.</span>
+    <span class="muted">Each sign-in sees only its own role's page.</span>
   </footer>
 
   <script src="config.js"></script>

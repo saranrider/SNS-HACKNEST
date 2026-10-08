@@ -55,7 +55,7 @@
         <section class="card" id="fees">
           <div class="card-head">
             <h2>Fee follow-up</h2>
-            <button type="button" class="btn" data-followup="student#nodues">Send reminders</button>
+            <button type="button" class="btn" data-action="fees.remind" data-done="Reminders sent">Send reminders</button>
           </div>
           <div class="row wrap"><span>Devi · II MCA</span><span class="fee-action" id="fee-devi"></span></div>
           <div class="row wrap"><span>Priya D · I MCA</span><strong class="text-wait">Second instalment due 20 Oct</strong></div>
@@ -67,9 +67,9 @@
           <h2>Certificate issue</h2>
           <p class="sub">Student and alumni requests share one queue. Issued certificates carry a QR code for verification.</p>
           <div class="row wrap"><span>Bonafide · Divya S</span><span class="pill ok">Issued with QR</span></div>
-          <div class="row wrap"><span>Transcript · Lakshmi V · alumna</span><span class="pill wait" data-followup="coe#certificates">With COE for verification</span></div>
-          <div class="row wrap"><span>Course completion · Suresh N</span><span class="pill wait" data-followup="coe#certificates">With COE for verification</span></div>
-          <div class="row wrap"><span>Consolidated marksheet · Anitha J</span><button type="button" class="btn" data-followup="alumni#certificate">Issue now</button></div>
+          <div class="row wrap"><span>Transcript · Lakshmi V · alumna</span><button type="button" class="btn" data-action="cert.lakshmi.issue" data-needs="cert.lakshmi" data-waiting="With COE for verification" data-done="Issued with QR · alumna notified">Issue now</button></div>
+          <div class="row wrap"><span>Course completion · Suresh N</span><span class="pill wait" data-followup="coe#certificates" data-shows="cert.suresh" data-done="Verified · ready to issue">With COE for verification</span></div>
+          <div class="row wrap"><span>Consolidated marksheet · Anitha J</span><button type="button" class="btn" data-action="cert.anitha.issue" data-done="Issued with QR">Issue now</button></div>
         </section>
       </div>
 
@@ -103,7 +103,7 @@
 
   <footer class="page-foot">
     <button type="button" class="btn outline" id="reset-demo">Reset demo data</button>
-    <span class="muted">Actions taken on one role's page carry over to the other pages in this browser.</span>
+    <span class="muted">Each sign-in sees only its own role's page.</span>
   </footer>
 
   <script src="config.js"></script>

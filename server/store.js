@@ -57,6 +57,18 @@ const SCHEMA = `
     raised_at TEXT NOT NULL,
     closed_by TEXT REFERENCES users(id)
   );
+  CREATE TABLE IF NOT EXISTS notifications (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    text    TEXT NOT NULL,
+    at      TEXT NOT NULL,
+    read    INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS decisions (
+    key TEXT PRIMARY KEY,
+    by  TEXT NOT NULL REFERENCES users(id),
+    at  TEXT NOT NULL
+  );
   CREATE TABLE IF NOT EXISTS audit (
     id     INTEGER PRIMARY KEY AUTOINCREMENT,
     at     TEXT NOT NULL,
@@ -67,7 +79,7 @@ const SCHEMA = `
   );
 `;
 
-const RECORD_TABLES = ["courses", "od_requests", "desks", "fees", "tickets", "audit"];
+const RECORD_TABLES = ["courses", "od_requests", "desks", "fees", "tickets", "notifications", "decisions", "audit"];
 
 function createStore(file) {
   if (file) fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -119,6 +131,41 @@ function createStore(file) {
 
   return {
     findUser: (id) => db.prepare("SELECT * FROM users WHERE id = ?").get(id),
+
+    findUserByName: (name) => db.prepare("SELECT * FROM users WHERE name = ?").get(name),
+
+    usersWithRole: (role) => db.prepare("SELECT * FROM users WHERE role = ?").all(role),
+
+    // A message for one person, shown on their page until they have read it.
+    addNotification: (userId, text) => {
+      db.prepare("INSERT INTO notifications (user_id, text, at) VALUES (?, ?, ?)").run(userId, text, new Date().toISOString());
+    },
+
+    notificationsFor: (userId) =>
+      db
+        .prepare("SELECT id, text, at, read FROM notifications WHERE user_id = ? ORDER BY id DESC LIMIT 20")
+        .all(userId)
+        .map((row) => ({ id: row.id, text: row.text, at: row.at, read: row.read === 1 })),
+
+    markNotificationsRead: (userId) => {
+      db.prepare("UPDATE notifications SET read = 1 WHERE user_id = ?").run(userId);
+    },
+
+    // Approvals and issues that are a single yes: a syllabus approved,
+    // marks verified, a certificate or hall ticket issued.
+    decisions: () => db.prepare("SELECT key FROM decisions ORDER BY at, rowid").all().map((row) => row.key),
+
+    addDecision: (key, userId) => {
+      const result = db
+        .prepare("INSERT OR IGNORE INTO decisions (key, by, at) VALUES (?, ?, ?)")
+        .run(key, userId, new Date().toISOString());
+      return result.changes ? "done" : "unchanged";
+    },
+
+    ticketRaiser: (id) => {
+      const row = db.prepare("SELECT raised_by AS raisedBy, text FROM tickets WHERE id = ?").get(id);
+      return row || null;
+    },
 
     courses: () => db.prepare("SELECT code, name, held, attended FROM courses ORDER BY rowid").all(),
 

@@ -11,6 +11,58 @@ const SESSION_HOURS = 8;
 const TICKET_OWNERS = ["Support desk", "Class advisor", "Accounts", "Examinations"];
 const MAX_FAILED_LOGINS = 5;
 const LOCK_SECONDS = 60;
+// Each single-step approval: who may give it, what must come first, who is
+// told, and which roles see that it happened.
+const DECISIONS = {
+  "syllabus.ds": {
+    role: "coe",
+    tell: [["staff", "The COE approved the Data Structures syllabus."]],
+    seenBy: ["staff", "coe"],
+  },
+  "syllabus.se": {
+    role: "coe",
+    tell: [["staff", "The COE approved the Software Engineering syllabus."]],
+    seenBy: ["staff", "coe"],
+  },
+  "cert.lakshmi": {
+    role: "coe",
+    tell: [
+      ["admin", "Marks verified for the transcript of Lakshmi V. It is ready to issue."],
+      ["alumni", "The COE has verified your marks. Your transcript is now with the admin desk."],
+    ],
+    seenBy: ["coe", "admin", "alumni"],
+  },
+  "cert.suresh": {
+    role: "coe",
+    tell: [["admin", "Marks verified for the course completion certificate of Suresh N. It is ready to issue."]],
+    seenBy: ["coe", "admin"],
+  },
+  "cert.lakshmi.issue": {
+    role: "admin",
+    needs: "cert.lakshmi",
+    tell: [["alumni", "Your transcript has been issued. You can download it with its QR code."]],
+    seenBy: ["coe", "admin", "alumni"],
+  },
+  "cert.anitha.issue": { role: "admin", tell: [], seenBy: ["coe", "admin"] },
+  "hallticket.devi": {
+    role: "coe",
+    needsReady: "Devi",
+    tell: [["student", "Your hall ticket has been issued by the COE."]],
+    seenBy: ["student", "coe"],
+  },
+  "project.devi": {
+    role: "staff",
+    tell: [["student", "Saran accepted your proposal. You can continue the 2024 face recognition attendance project."]],
+    seenBy: ["student", "staff"],
+  },
+  "fees.remind": {
+    role: "admin",
+    tell: [["student", "Reminder from the accounts desk: your exam fee is due and is holding your hall ticket."]],
+    seenBy: ["admin"],
+  },
+};
+
+const DEMO_STUDENT = "Devi"; // the student whose case the staff, COE and admin pages follow
 
 function createApp(store) {
   const app = express();
@@ -35,13 +87,46 @@ function createApp(store) {
     store.addAudit({ at: new Date().toISOString(), user: user.id, role: user.role, action, target });
   }
 
-  // The shape the pages expect: who has an approved OD, and Devi's fee.
-  function publicState() {
+  // Sends a message to one person, or to everyone holding a role.
+  function notifyUser(name, text) {
+    const user = store.findUserByName(name);
+    if (user) store.addNotification(user.id, text);
+  }
+  function notifyRole(role, text) {
+    for (const user of store.usersWithRole(role)) store.addNotification(user.id, text);
+  }
+
+  // Once attendance and dues are both in order, the student and the
+  // examinations office are told that the hall ticket can be issued.
+  function announceIfReady(student) {
+    if (!store.approvedStudents().includes(student) || store.feeStatus(student) !== "paid") return;
+    notifyUser(student, "Your hall ticket is ready to issue: attendance and dues are both clear.");
+    notifyRole("coe", student + " is now eligible. The hall ticket is ready to issue.");
+  }
+
+  // What one signed-in person may see. Students and alumni get only their
+  // own items; staff, COE and the office get the records they act on.
+  function publicState(user) {
+    const everything = user.role === "staff" || user.role === "coe" || user.role === "admin";
+    const approved = store.approvedStudents();
+    const tickets = store.tickets();
     return {
-      odApproved: store.approvedStudents(),
-      feePaid: store.feeStatus("Devi") === "paid",
-      tickets: store.tickets(),
+      odApproved: everything ? approved : approved.filter((name) => name === user.name),
+      feePaid: user.role === "alumni" ? false : store.feeStatus(everything ? DEMO_STUDENT : user.name) === "paid",
+      tickets: user.role === "admin" ? tickets : tickets.filter((ticket) => ticket.raisedBy === user.name),
+      decisions: store.decisions().filter((key) => DECISIONS[key] && DECISIONS[key].seenBy.includes(user.role)),
+      notifications: store.notificationsFor(user.id).map((item) => Object.assign({ to: user.role }, item)),
     };
+  }
+
+  function recordsFor(user) {
+    const requests = store.odRequests();
+    if (user.role === "student") {
+      return { courses: store.courses(), odRequests: requests.filter((item) => item.student === user.name) };
+    }
+    if (user.role === "staff" || user.role === "coe") return { courses: store.courses(), odRequests: requests };
+    if (user.role === "admin") return { courses: store.courses(), odRequests: requests, desks: store.desks() };
+    return {};
   }
 
   function requireUser(req, res, next) {
@@ -105,27 +190,35 @@ function createApp(store) {
     res.json({ ok: true });
   });
 
-  app.get("/api/state", requireUser, (req, res) => res.json(publicState()));
+  app.get("/api/state", requireUser, (req, res) => res.json(publicState(req.user)));
 
   app.post("/api/od/approve", requireUser, requireRole("staff"), (req, res) => {
     const student = String((req.body && req.body.student) || "");
     const outcome = store.approveOd(student, req.user.id);
     if (outcome === "missing") return res.status(404).json({ error: "No OD request for that student." });
-    if (outcome === "done") record(req.user, "od.approve", student);
-    res.json(publicState());
+    if (outcome === "done") {
+      record(req.user, "od.approve", student);
+      notifyUser(student, "Your OD request was approved by " + req.user.name + ". Your attendance has been updated.");
+      announceIfReady(student);
+    }
+    res.json(publicState(req.user));
   });
 
   app.post("/api/fees/pay", requireUser, requireRole("admin"), (req, res) => {
     const student = String((req.body && req.body.student) || "");
     const outcome = store.payFee(student, req.user.id);
     if (outcome === "missing") return res.status(404).json({ error: "No fee record for that student." });
-    if (outcome === "done") record(req.user, "fee.pay", student);
-    res.json(publicState());
+    if (outcome === "done") {
+      record(req.user, "fee.pay", student);
+      notifyUser(student, "Your fee payment was recorded. The accounts desk has cleared your dues.");
+      announceIfReady(student);
+    }
+    res.json(publicState(req.user));
   });
 
   // The records the dashboards draw from.
   app.get("/api/records", requireUser, (req, res) => {
-    res.json({ courses: store.courses(), odRequests: store.odRequests(), desks: store.desks() });
+    res.json(recordsFor(req.user));
   });
 
   // A student's query or a staff member's campus issue.
@@ -146,16 +239,44 @@ function createApp(store) {
     };
     store.addTicket(ticket);
     record(req.user, "ticket.raise", ticket.id);
-    res.status(201).json(publicState());
+    notifyRole("admin", "New request from " + req.user.name + ": " + text);
+    res.status(201).json(publicState(req.user));
   });
 
   app.post("/api/tickets/close", requireUser, requireRole("admin"), (req, res) => {
     const id = String((req.body && req.body.id) || "");
-    if (store.closeTicket(id, req.user.id) === "missing") {
+    const raised = store.ticketRaiser(id);
+    if (!raised || store.closeTicket(id, req.user.id) === "missing") {
       return res.status(404).json({ error: "No ticket with that ID." });
     }
+    notifyUser(raised.raisedBy, "Your request was resolved by the support desk: " + raised.text);
     record(req.user, "ticket.close", id);
-    res.json(publicState());
+    res.json(publicState(req.user));
+  });
+
+  // A single-step approval: syllabus, marks, certificate, hall ticket.
+  app.post("/api/decisions", requireUser, (req, res) => {
+    const key = String((req.body && req.body.key) || "");
+    const rule = Object.prototype.hasOwnProperty.call(DECISIONS, key) ? DECISIONS[key] : null;
+    if (!rule) return res.status(404).json({ error: "No such approval." });
+    if (req.user.role !== rule.role) return res.status(403).json({ error: "Only " + rule.role + " can do this." });
+    if (rule.needs && !store.decisions().includes(rule.needs)) {
+      return res.status(409).json({ error: "An earlier step is still waiting." });
+    }
+    if (rule.needsReady) {
+      const ready = store.approvedStudents().includes(rule.needsReady) && store.feeStatus(rule.needsReady) === "paid";
+      if (!ready) return res.status(409).json({ error: rule.needsReady + " is still on hold." });
+    }
+    if (store.addDecision(key, req.user.id) === "done") {
+      record(req.user, "decision", key);
+      for (const [role, text] of rule.tell) notifyRole(role, text);
+    }
+    res.json(publicState(req.user));
+  });
+
+  app.post("/api/notifications/read", requireUser, (req, res) => {
+    store.markNotificationsRead(req.user.id);
+    res.json(publicState(req.user));
   });
 
   // Who did what, for the office and the examinations office.
@@ -170,7 +291,7 @@ function createApp(store) {
   app.post("/api/reset", requireUser, (req, res) => {
     store.reset();
     record(req.user, "demo.reset", "all");
-    res.json(publicState());
+    res.json(publicState(req.user));
   });
 
   app.use("/api", (req, res) => res.status(404).json({ error: "Unknown API path." }));

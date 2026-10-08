@@ -39,12 +39,14 @@ All paths except `/api/health` and `/api/login` need the header `Authorization: 
 | `GET /api/health` | anyone | Says the server is up |
 | `POST /api/login` | anyone | Body `{ id, password }`; returns a token, role and name |
 | `POST /api/logout` | signed in | Ends the session |
-| `GET /api/state` | signed in | Which OD requests are approved, whether the demo fee is paid, and the support tickets |
-| `GET /api/records` | signed in | Courses, OD requests and desk figures |
+| `GET /api/state` | signed in | This person's own share: approved OD requests, fee status, tickets, approvals and notifications |
+| `GET /api/records` | signed in | The records this role works from (a student gets only her own OD request; desk figures go to the admin only) |
 | `POST /api/tickets` | signed in | Body `{ text, owner }`; raises a query or campus issue |
 | `POST /api/tickets/close` | Admin | Body `{ id }`; closes that ticket |
 | `POST /api/od/approve` | Staff | Body `{ student }`; approves that OD request |
 | `POST /api/fees/pay` | Admin | Body `{ student }`; records that fee as paid |
+| `POST /api/decisions` | the role that owns the step | Body `{ key }`; a single-step approval: syllabus approved, marks verified, certificate or hall ticket issued |
+| `POST /api/notifications/read` | signed in | Marks this person's notifications as read |
 | `GET /api/audit` | Admin, COE | The last 50 actions |
 | `POST /api/reset` | signed in | Puts the demo records back to the start |
 
@@ -67,6 +69,8 @@ The server keeps its records in SQLite, in `server/data/hacknext.db`. The file i
 | `desks` | The four no-dues desks and their figures |
 | `fees` | Fee items, who recorded each payment and when |
 | `tickets` | Student queries and staff campus issues |
+| `notifications` | One message per person, with a read mark |
+| `decisions` | Single-step approvals: who gave each and when |
 | `audit` | Who did what and when |
 
 All the SQL is in `server/store.js`; the routes in `server.js` only call its functions.
@@ -84,4 +88,4 @@ If the pages are on GitHub Pages and the server is on another address, set that 
 - The data is sample data. SQLite is a real database but lives in one file on one machine; a college-wide system would move to a database server such as PostgreSQL.
 - Sessions are kept in memory, so restarting the server signs everyone out.
 - Some lists on the pages (assignments, circulars, syllabus status and similar) are still fixed sample text in the HTML.
-- The side-by-side view signs each pane in with that role's demo account so it can be shown without a sign-in step.
+- Notifications arrive by asking the server every three seconds, not by push.

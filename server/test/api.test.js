@@ -48,7 +48,7 @@ test("state needs a sign-in", async () => {
   api.stop();
 });
 
-test("only staff can approve an OD, and every role then sees it", async () => {
+test("only staff can approve an OD, and the student is notified", async () => {
   const api = await start();
   const student = await api.login("devi");
   const staff = await api.login("saran");
@@ -61,7 +61,13 @@ test("only staff can approve an OD, and every role then sees it", async () => {
   assert.deepEqual(approved.body.odApproved, ["Devi"]);
 
   const seen = await api.call("GET", "/api/state", null, student);
-  assert.deepEqual(seen.body, { odApproved: ["Devi"], feePaid: false, tickets: [] });
+  assert.deepEqual(seen.body.odApproved, ["Devi"]);
+  assert.equal(seen.body.notifications.length, 1);
+  assert.match(seen.body.notifications[0].text, /OD request was approved by Saran/);
+  assert.equal(seen.body.notifications[0].read, false);
+
+  const read = await api.call("POST", "/api/notifications/read", null, student);
+  assert.equal(read.body.notifications[0].read, true);
   api.stop();
 });
 
@@ -86,7 +92,7 @@ test("reset puts the records back and keeps the users", async () => {
   const staff = await api.login("saran");
   await api.call("POST", "/api/od/approve", { student: "Devi" }, staff);
   const reset = await api.call("POST", "/api/reset", null, staff);
-  assert.deepEqual(reset.body, { odApproved: [], feePaid: false, tickets: [] });
+  assert.deepEqual(reset.body, { odApproved: [], feePaid: false, tickets: [], decisions: [], notifications: [] });
   assert.ok(await api.login("saran"));
   api.stop();
 });
@@ -122,7 +128,9 @@ test("records come from the server and need a sign-in", async () => {
   const records = await api.call("GET", "/api/records", null, staff);
   assert.equal(records.body.courses.length, 5);
   assert.equal(records.body.odRequests[0].student, "Devi");
-  assert.equal(records.body.desks.length, 4);
+  assert.equal(records.body.desks, undefined, "desk figures are for the office only");
+  const admin = await api.login("admin");
+  assert.equal((await api.call("GET", "/api/records", null, admin)).body.desks.length, 4);
   api.stop();
 });
 
@@ -145,4 +153,75 @@ test("records are kept in the database file across a restart", async () => {
   assert.deepEqual(second.approvedStudents(), []);
   assert.equal(second.courses().length, 5);
   second.close();
+});
+
+test("each sign-in gets only its own share of the records", async () => {
+  const api = await start();
+  const student = await api.login("devi");
+  const staff = await api.login("saran");
+  const alumni = await api.login("alumni");
+  const admin = await api.login("admin");
+
+  // a student sees only her own OD request, not her classmates'
+  const mine = await api.call("GET", "/api/records", null, student);
+  assert.deepEqual(mine.body.odRequests.map((item) => item.student), ["Devi"]);
+  assert.equal((await api.call("GET", "/api/records", null, staff)).body.odRequests.length, 3);
+  assert.deepEqual((await api.call("GET", "/api/records", null, alumni)).body, {});
+
+  // a ticket is visible to the person who raised it and to the office, nobody else
+  await api.call("POST", "/api/tickets", { text: "Projector in Lab 2" }, staff);
+  assert.equal((await api.call("GET", "/api/state", null, student)).body.tickets.length, 0);
+  assert.equal((await api.call("GET", "/api/state", null, staff)).body.tickets.length, 1);
+  assert.equal((await api.call("GET", "/api/state", null, admin)).body.tickets.length, 1);
+  api.stop();
+});
+
+test("every acceptance notifies the people it concerns", async () => {
+  const api = await start();
+  const student = await api.login("devi");
+  const staff = await api.login("saran");
+  const admin = await api.login("admin");
+  const coe = await api.login("brundha");
+  const notes = async (token) => (await api.call("GET", "/api/state", null, token)).body.notifications.map((n) => n.text);
+
+  const raised = await api.call("POST", "/api/tickets", { text: "Bus pass renewal date?" }, student);
+  assert.match((await notes(admin))[0], /New request from Devi/);
+  await api.call("POST", "/api/tickets/close", { id: raised.body.tickets[0].id }, admin);
+  assert.match((await notes(student))[0], /resolved by the support desk/);
+
+  await api.call("POST", "/api/od/approve", { student: "Devi" }, staff);
+  assert.equal((await notes(coe)).length, 0, "not ready until the fee is paid as well");
+  await api.call("POST", "/api/fees/pay", { student: "Devi" }, admin);
+  assert.match((await notes(coe))[0], /Devi is now eligible/);
+  assert.match((await notes(student))[0], /hall ticket is ready/);
+  assert.equal((await notes(staff)).length, 0, "staff are not sent other people's messages");
+  api.stop();
+});
+
+test("the COE verifies marks, the admin issues, and the alumnus is told at each step", async () => {
+  const api = await start();
+  const coe = await api.login("brundha");
+  const admin = await api.login("admin");
+  const alumni = await api.login("alumni");
+  const student = await api.login("devi");
+  const state = async (token) => (await api.call("GET", "/api/state", null, token)).body;
+
+  // the admin cannot issue before the COE has verified, and cannot verify at all
+  assert.equal((await api.call("POST", "/api/decisions", { key: "cert.lakshmi.issue" }, admin)).status, 409);
+  assert.equal((await api.call("POST", "/api/decisions", { key: "cert.lakshmi" }, admin)).status, 403);
+  assert.equal((await api.call("POST", "/api/decisions", { key: "nothing" }, coe)).status, 404);
+
+  assert.equal((await api.call("POST", "/api/decisions", { key: "cert.lakshmi" }, coe)).status, 200);
+  assert.match((await state(admin)).notifications[0].text, /ready to issue/);
+  assert.match((await state(alumni)).notifications[0].text, /verified your marks/);
+
+  await api.call("POST", "/api/decisions", { key: "cert.lakshmi.issue" }, admin);
+  const after = await state(alumni);
+  assert.deepEqual(after.decisions, ["cert.lakshmi", "cert.lakshmi.issue"]);
+  assert.match(after.notifications[0].text, /has been issued/);
+  assert.deepEqual((await state(student)).decisions, [], "a student is not shown certificate approvals");
+
+  // a hall ticket cannot be issued while the student is on hold
+  assert.equal((await api.call("POST", "/api/decisions", { key: "hallticket.devi" }, coe)).status, 409);
+  api.stop();
 });
