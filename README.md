@@ -2,7 +2,7 @@
 
 A Prototype built for PSNA College of Engineering & Technology.
 
-Static, clickable screens for the five roles in our workflow diagram. Open `index.html` in a browser; there is no build step and no server.
+Clickable screens for the five roles in our workflow diagram. They work on their own (open `index.html` in a browser) and, when served by the backend in `../server`, they use it for sign-in and shared records. See the README at the top of the repository.
 
 ## Files
 
@@ -18,6 +18,7 @@ Static, clickable screens for the five roles in our workflow diagram. Open `inde
 | `images/` | One picture per role, used on the sign-in tiles and in the top bar |
 | `styles.css` | Shared blue and white theme |
 | `app.js` | Sample data and page logic |
+| `config.js` | The backend's address, when it is hosted separately |
 
 ## Signing in
 
