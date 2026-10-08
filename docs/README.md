@@ -14,6 +14,14 @@ Static, clickable screens for the five roles in our workflow diagram. Open `inde
 | `styles.css` | Shared blue and white theme |
 | `app.js` | Sample data and page logic |
 
+## The pages are connected
+
+Actions are saved in the browser (`localStorage`) and read by every page, so one student's case can be followed across roles:
+
+1. Staff approves Karthik's OD request: his attendance on the Student page moves from 74.5% to 77.6%, and the COE hall ticket row drops the "OD pending" reason.
+2. Admin records his fee payment: the accounts desk clears, no dues becomes 4 / 4, and the hall ticket shows "Ready to issue" on both the Student and COE pages.
+3. "Reset demo data" at the bottom of any page puts everything back.
+
 ## What works
 
 - The top bar switches between roles.

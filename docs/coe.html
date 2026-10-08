@@ -52,8 +52,8 @@
         </div>
         <div class="stat">
           <div class="label">Hall tickets · II MCA</div>
-          <div class="value">3 / 5</div>
-          <div class="hint stop">2 on hold</div>
+          <div class="value" id="ht-issued">-</div>
+          <div class="hint stop" id="ht-issued-hint"></div>
         </div>
         <div class="stat">
           <div class="label">Certificates to verify</div>
@@ -97,7 +97,7 @@
               <tr><td>Arun P</td><td class="mono">80.6%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
               <tr><td>Divya S</td><td class="mono">76.5%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
               <tr><td>Farida B</td><td class="mono">88.3%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
-              <tr><td>Karthik R</td><td class="mono text-stop">74.5%</td><td class="text-wait">3 of 4 desks</td><td><span class="pill stop">On hold · OD pending, fee due</span></td></tr>
+              <tr><td>Karthik R</td><td id="coe-attendance" class="mono">-</td><td id="coe-dues">-</td><td><span class="pill" id="coe-status"></span></td></tr>
               <tr><td>Naveen M</td><td class="mono">79.1%</td><td class="text-wait">3 of 4 desks</td><td><span class="pill wait">On hold · library book due</span></td></tr>
             </tbody>
           </table>
@@ -123,6 +123,11 @@
       </div>
     </main>
   </div>
+
+  <footer class="page-foot">
+    <button type="button" class="btn outline" id="reset-demo">Reset demo data</button>
+    <span class="muted">Actions taken on one role's page carry over to the other pages in this browser.</span>
+  </footer>
 
   <script src="app.js"></script>
 </body>

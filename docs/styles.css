@@ -531,3 +531,23 @@ td {
   align-items: center;
   margin-top: 12px;
 }
+
+/* ---------- shared demo state ---------- */
+
+.fee-action {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 24px 32px;
+  font-size: 14px;
+}
