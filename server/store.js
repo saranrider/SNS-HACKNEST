@@ -64,6 +64,17 @@ const SCHEMA = `
     at      TEXT NOT NULL,
     read    INTEGER NOT NULL DEFAULT 0
   );
+  CREATE TABLE IF NOT EXISTS requests (
+    id         TEXT PRIMARY KEY,
+    kind       TEXT NOT NULL,
+    text       TEXT NOT NULL,
+    from_user  TEXT NOT NULL REFERENCES users(id),
+    from_name  TEXT NOT NULL,
+    to_role    TEXT NOT NULL,
+    status     TEXT NOT NULL DEFAULT 'open',
+    raised_at  TEXT NOT NULL,
+    decided_by TEXT REFERENCES users(id)
+  );
   CREATE TABLE IF NOT EXISTS decisions (
     key TEXT PRIMARY KEY,
     by  TEXT NOT NULL REFERENCES users(id),
@@ -79,7 +90,7 @@ const SCHEMA = `
   );
 `;
 
-const RECORD_TABLES = ["courses", "od_requests", "desks", "fees", "tickets", "notifications", "decisions", "audit"];
+const RECORD_TABLES = ["courses", "od_requests", "desks", "fees", "tickets", "requests", "notifications", "decisions", "audit"];
 
 function createStore(file) {
   if (file) fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -159,6 +170,33 @@ function createStore(file) {
       const result = db
         .prepare("INSERT OR IGNORE INTO decisions (key, by, at) VALUES (?, ?, ?)")
         .run(key, userId, new Date().toISOString());
+      return result.changes ? "done" : "unchanged";
+    },
+
+    // Something one person asks another role to accept: a new OD request,
+    // a certificate, a referral to publish, a duty change.
+    requests: () =>
+      db
+        .prepare(
+          "SELECT id, kind, text, from_user AS fromUser, from_name AS fromName, to_role AS toRole, status, raised_at AS raisedAt FROM requests ORDER BY raised_at, rowid"
+        )
+        .all(),
+
+    findRequest: (id) =>
+      db
+        .prepare("SELECT id, kind, text, from_user AS fromUser, from_name AS fromName, to_role AS toRole, status FROM requests WHERE id = ?")
+        .get(id) || null,
+
+    addRequest: (request) => {
+      db.prepare(
+        "INSERT INTO requests (id, kind, text, from_user, from_name, to_role, status, raised_at) VALUES (?, ?, ?, ?, ?, ?, 'open', ?)"
+      ).run(request.id, request.kind, request.text, request.fromUser, request.fromName, request.toRole, request.raisedAt);
+    },
+
+    acceptRequest: (id, userId) => {
+      const result = db
+        .prepare("UPDATE requests SET status = 'accepted', decided_by = ? WHERE id = ? AND status = 'open'")
+        .run(userId, id);
       return result.changes ? "done" : "unchanged";
     },
 

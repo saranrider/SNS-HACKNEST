@@ -52,6 +52,7 @@
             <tbody id="od-rows"></tbody>
           </table>
         </div>
+        <div data-inbox="od" aria-live="polite"></div>
       </section>
 
       <div class="grid-2">
@@ -59,7 +60,7 @@
           <h2>Mark attendance · today</h2>
           <div class="row"><span>Period 1 · II MCA · Database Systems</span><span class="pill ok">Marked</span></div>
           <div class="row"><span>Period 3 · I MCA · Data Structures</span><span class="pill ok">Marked</span></div>
-          <div class="row"><span>Period 5 · II MCA · Database Systems lab</span><button type="button" class="btn outline">Mark now</button></div>
+          <div class="row"><span>Period 5 · II MCA · Database Systems lab</span><button type="button" class="btn outline" data-action="attendance.p5" data-done="Marked">Mark now</button></div>
           <div class="row"><span>Period 7 · I MCA · Data Structures</span><span class="muted">Starts 3:10 pm</span></div>
         </section>
 
@@ -107,8 +108,9 @@
         <section class="card" id="duty">
           <h2>Duty alteration</h2>
           <p class="sub">Only colleagues who are free and eligible are shown. Accepted changes reach salary calculation.</p>
-          <div class="row"><span>Invigilation · 14 Oct forenoon · you cannot attend</span><button type="button" class="btn outline" data-followup="admin#salary">3 free staff</button></div>
+          <div class="row"><span>Invigilation · 14 Oct forenoon · you cannot attend</span><button type="button" class="btn outline" data-request="duty" data-ask="Who takes the duty" data-options="Mr. Ravi T|Ms. Shalini G|Mr. Karthik R" data-prefix="Invigilation on 14 Oct forenoon goes to " data-send="Send for approval">3 free staff</button></div>
           <div class="row"><span>Class swap · 9 Oct period 2</span><span class="pill ok">Accepted by colleague</span></div>
+          <div data-my-requests="duty" aria-live="polite"></div>
         </section>
       </div>
 

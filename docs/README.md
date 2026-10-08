@@ -54,8 +54,18 @@ Every acceptance tells the people it concerns, within about three seconds. A "No
 | The COE verifies marks for a certificate | The admin and the alumnus |
 | Admin issues the certificate | The alumnus |
 | Staff accept a project proposal | The student |
+| A student sends a new OD request | Staff; the student is told when it is approved |
+| Staff ask for a duty change | The admin; staff are told when it is approved |
+| An alumnus asks for a certificate, a business listing or a record update | The admin; the alumnus is told when it is done |
+| An alumnus posts a referral or offers mentoring | The admin; on publishing, the alumnus and the students are told |
 
 An element that is waiting on another role shows who has the next step when you hover over it (marked `data-followup` in the HTML). It does not open that role's page.
+
+## Every button does something
+
+No control on any dashboard is decorative. A button either acts at once (approve, issue, verify, mark, record), opens a short form whose result goes to the role that must accept it (new OD request, duty change, certificate request, referral, mentoring, business listing, record update), or searches (the alumni directory). The one disabled button, "Send to COE after fixing gaps" on the Staff page, is disabled on purpose because the draft paper fails the blueprint check.
+
+A new OD request sent through the form is recorded and approved, but it does not change the attendance figures: only the sample hackathon request carries per-course periods.
 
 ## The pages are connected
 

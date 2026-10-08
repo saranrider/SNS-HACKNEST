@@ -92,7 +92,7 @@ test("reset puts the records back and keeps the users", async () => {
   const staff = await api.login("saran");
   await api.call("POST", "/api/od/approve", { student: "Devi" }, staff);
   const reset = await api.call("POST", "/api/reset", null, staff);
-  assert.deepEqual(reset.body, { odApproved: [], feePaid: false, tickets: [], decisions: [], notifications: [] });
+  assert.deepEqual(reset.body, { odApproved: [], feePaid: false, tickets: [], requests: [], decisions: [], notifications: [] });
   assert.ok(await api.login("saran"));
   api.stop();
 });
@@ -223,5 +223,52 @@ test("the COE verifies marks, the admin issues, and the alumnus is told at each 
 
   // a hall ticket cannot be issued while the student is on hold
   assert.equal((await api.call("POST", "/api/decisions", { key: "hallticket.devi" }, coe)).status, 409);
+  api.stop();
+});
+
+test("a new OD request reaches staff, and approving it notifies the student", async () => {
+  const api = await start();
+  const student = await api.login("devi");
+  const staff = await api.login("saran");
+  const admin = await api.login("admin");
+  const state = async (token) => (await api.call("GET", "/api/state", null, token)).body;
+
+  assert.equal((await api.call("POST", "/api/requests", { kind: "od", text: "x" }, student)).status, 400);
+  assert.equal((await api.call("POST", "/api/requests", { kind: "od", text: "Symposium" }, staff)).status, 403);
+  assert.equal((await api.call("POST", "/api/requests", { kind: "nothing", text: "Symposium" }, student)).status, 404);
+
+  const sent = await api.call("POST", "/api/requests", { kind: "od", text: "Symposium at NIT Trichy, 12 Oct, 4 periods" }, student);
+  assert.equal(sent.status, 201);
+  assert.equal(sent.body.requests[0].status, "open");
+  const id = sent.body.requests[0].id;
+
+  const inbox = await state(staff);
+  assert.equal(inbox.requests.length, 1);
+  assert.match(inbox.notifications[0].text, /New od request from Devi/);
+  assert.equal((await state(admin)).requests.length, 0, "the office is not sent OD requests");
+
+  assert.equal((await api.call("POST", "/api/requests/accept", { id }, student)).status, 403);
+  assert.equal((await api.call("POST", "/api/requests/accept", { id }, admin)).status, 403);
+  const accepted = await api.call("POST", "/api/requests/accept", { id }, staff);
+  assert.equal(accepted.body.requests[0].status, "accepted");
+
+  const after = await state(student);
+  assert.equal(after.requests[0].status, "accepted");
+  assert.match(after.notifications[0].text, /Your od request was approved by Saran/);
+  api.stop();
+});
+
+test("an alumni referral is published by the admin and students are told", async () => {
+  const api = await start();
+  const alumni = await api.login("alumni");
+  const admin = await api.login("admin");
+  const student = await api.login("devi");
+  const state = async (token) => (await api.call("GET", "/api/state", null, token)).body;
+
+  const sent = await api.call("POST", "/api/requests", { kind: "referral", text: "Junior developer, Chennai" }, alumni);
+  await api.call("POST", "/api/requests/accept", { id: sent.body.requests[0].id }, admin);
+  assert.match((await state(alumni)).notifications[0].text, /job referral was published by Admin/);
+  assert.match((await state(student)).notifications[0].text, /alumni network/);
+  assert.equal((await state(student)).requests.length, 0);
   api.stop();
 });

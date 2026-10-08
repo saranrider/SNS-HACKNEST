@@ -55,11 +55,24 @@ const DECISIONS = {
     tell: [["student", "Saran accepted your proposal. You can continue the 2024 face recognition attendance project."]],
     seenBy: ["student", "staff"],
   },
+  "attendance.p5": { role: "staff", tell: [], seenBy: ["staff"] },
   "fees.remind": {
     role: "admin",
     tell: [["student", "Reminder from the accounts desk: your exam fee is due and is holding your hall ticket."]],
     seenBy: ["admin"],
   },
+};
+
+// What one role can ask another to accept. "announce" names a role that is
+// also told once the request is accepted.
+const REQUEST_KINDS = {
+  od: { from: "student", to: "staff", label: "OD request", accepted: "approved" },
+  duty: { from: "staff", to: "admin", label: "Duty change", accepted: "approved" },
+  certificate: { from: "alumni", to: "admin", label: "Certificate request", accepted: "issued" },
+  referral: { from: "alumni", to: "admin", label: "Job referral", accepted: "published", announce: "student" },
+  mentoring: { from: "alumni", to: "admin", label: "Mentoring offer", accepted: "published", announce: "student" },
+  business: { from: "alumni", to: "admin", label: "Business listing", accepted: "listed" },
+  profile: { from: "alumni", to: "admin", label: "Record update", accepted: "updated" },
 };
 
 const DEMO_STUDENT = "Devi"; // the student whose case the staff, COE and admin pages follow
@@ -114,6 +127,10 @@ function createApp(store) {
       odApproved: everything ? approved : approved.filter((name) => name === user.name),
       feePaid: user.role === "alumni" ? false : store.feeStatus(everything ? DEMO_STUDENT : user.name) === "paid",
       tickets: user.role === "admin" ? tickets : tickets.filter((ticket) => ticket.raisedBy === user.name),
+      requests: store
+        .requests()
+        .filter((item) => item.fromUser === user.id || item.toRole === user.role)
+        .map(({ fromUser, ...rest }) => rest),
       decisions: store.decisions().filter((key) => DECISIONS[key] && DECISIONS[key].seenBy.includes(user.role)),
       notifications: store.notificationsFor(user.id).map((item) => Object.assign({ to: user.role }, item)),
     };
@@ -251,6 +268,46 @@ function createApp(store) {
     }
     notifyUser(raised.raisedBy, "Your request was resolved by the support desk: " + raised.text);
     record(req.user, "ticket.close", id);
+    res.json(publicState(req.user));
+  });
+
+  // One role asks another to accept something.
+  app.post("/api/requests", requireUser, (req, res) => {
+    const kind = String((req.body && req.body.kind) || "");
+    const rule = Object.prototype.hasOwnProperty.call(REQUEST_KINDS, kind) ? REQUEST_KINDS[kind] : null;
+    if (!rule) return res.status(404).json({ error: "No such kind of request." });
+    if (req.user.role !== rule.from) return res.status(403).json({ error: "Only " + rule.from + " can send this." });
+    const text = String((req.body && req.body.text) || "").trim();
+    if (text.length < 3 || text.length > 300) {
+      return res.status(400).json({ error: "Write between 3 and 300 characters." });
+    }
+    const request = {
+      id: crypto.randomUUID().slice(0, 8),
+      kind,
+      text,
+      fromUser: req.user.id,
+      fromName: req.user.name,
+      toRole: rule.to,
+      raisedAt: new Date().toISOString(),
+    };
+    store.addRequest(request);
+    record(req.user, "request.raise", kind + " " + request.id);
+    notifyRole(rule.to, "New " + rule.label.toLowerCase() + " from " + req.user.name + ": " + text);
+    res.status(201).json(publicState(req.user));
+  });
+
+  app.post("/api/requests/accept", requireUser, (req, res) => {
+    const request = store.findRequest(String((req.body && req.body.id) || ""));
+    if (!request) return res.status(404).json({ error: "No request with that ID." });
+    const rule = REQUEST_KINDS[request.kind];
+    if (req.user.role !== request.toRole) {
+      return res.status(403).json({ error: "Only " + request.toRole + " can accept this." });
+    }
+    if (store.acceptRequest(request.id, req.user.id) === "done") {
+      record(req.user, "request.accept", request.kind + " " + request.id);
+      store.addNotification(request.fromUser, "Your " + rule.label.toLowerCase() + " was " + rule.accepted + " by " + req.user.name + ": " + request.text);
+      if (rule.announce) notifyRole(rule.announce, "New from the alumni network (" + rule.label.toLowerCase() + "): " + request.text);
+    }
     res.json(publicState(req.user));
   });
 
