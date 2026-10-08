@@ -866,14 +866,6 @@ td {
   background: var(--blue-50);
 }
 
-.login-warning {
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: var(--wait-bg);
-  color: var(--wait-fg);
-  font-size: 14px;
-}
-
 .front-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
