@@ -121,6 +121,9 @@ async function pullRecords() {
   replace(courses, response.data.courses);
   replace(odRequests, response.data.odRequests);
   replace(desks, response.data.desks);
+  replace(staffInOut, response.data.inOut);
+  if (response.data.ownClasses) Object.assign(ownClasses, response.data.ownClasses);
+  if (response.data.colleagueBusy) Object.assign(colleagueBusy, response.data.colleagueBusy);
 }
 
 // Sends an action to the server. The page has already shown the result, so
@@ -152,7 +155,7 @@ async function sendAction(path, body) {
 function midEntry() {
   const active = document.activeElement;
   if (active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName)) return true;
-  return Array.from(document.querySelectorAll("input[type=text], input[type=search], input[type=datetime-local], textarea")).some(
+  return Array.from(document.querySelectorAll("input[type=text], input[type=search], input[type=datetime-local], input[type=date], textarea")).some(
     (field) => field.offsetParent !== null && field.value !== field.defaultValue
   );
 }
@@ -1407,7 +1410,7 @@ const requestKinds = {
   hallticket: { to: "coe", label: "Hall ticket request", accepted: "issued", accept: "Issue hall ticket", decision: "hallticket.devi" },
   submission: { to: "staff", label: "Assignment submission", accepted: "accepted", accept: "Accept submission" },
   general: { label: "Request", accepted: "accepted", accept: "Accept" },
-  duty: { to: "admin", label: "Duty change", accepted: "approved", accept: "Approve" },
+  duty: { to: "admin", label: "Class alteration", accepted: "approved", accept: "Approve" },
   certificate: { to: "admin", label: "Certificate request", accepted: "issued", accept: "Issue" },
   referral: { to: "admin", label: "Job referral", accepted: "published", accept: "Publish", announce: "student" },
   mentoring: { to: "admin", label: "Mentoring offer", accepted: "published", accept: "Publish", announce: "student" },
@@ -1427,7 +1430,8 @@ function readableDateTime(value) {
 }
 
 // "dates" is { from, to } for the kinds that need a start and an end.
-function addRequest(kind, text, dates) {
+// "extra" is anything more the server needs to check the request itself.
+function addRequest(kind, text, dates, extra) {
   const rule = requestKinds[kind];
   const toRole = rule.to || superiorOf[document.body.dataset.role];
   const shown = dates ? text + " · from " + readableDateTime(dates.from) + " to " + readableDateTime(dates.to) : text;
@@ -1435,7 +1439,7 @@ function addRequest(kind, text, dates) {
   state.requests.push({ id: "local-" + Date.now(), kind, text: shown, fromName: currentUserName(), toRole, status: "open" });
   addNote(state, toRole, "New " + rule.label.toLowerCase() + " from " + currentUserName() + ": " + shown);
   saveState(state);
-  sendAction("/api/requests", Object.assign({ kind, text }, dates || {}));
+  sendAction("/api/requests", Object.assign({ kind, text }, dates || {}, extra || {}));
 }
 
 function acceptRequest(id) {
@@ -1636,6 +1640,176 @@ function renderRequests() {
   });
 }
 
+/* ---------- staff: in and out times ---------- */
+
+// Sample values, replaced by the server's when it is running.
+const staffInOut = [
+  { date: "2026-10-01", in: "08:48", out: "16:35" },
+  { date: "2026-10-03", in: "08:55", out: "13:10" },
+  { date: "2026-10-05", in: "08:41", out: "16:42" },
+  { date: "2026-10-06", in: "08:50", out: "17:05" },
+  { date: "2026-10-07", in: "09:02", out: "16:30" },
+  { date: "2026-10-08", in: "08:52", out: null },
+];
+
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// "2026-10-12" -> { day: "Mon", label: "Mon 12 Oct 2026" }, or null.
+function readDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
+  if (!match) return null;
+  const date = new Date(match[0] + "T00:00:00Z");
+  if (Number.isNaN(date.getTime())) return null;
+  const day = DAY_NAMES[date.getUTCDay()];
+  return { day, label: day + " " + Number(match[3]) + " " + MONTH_NAMES[Number(match[2]) - 1] + " " + match[1] };
+}
+
+const minutesOf = (clock) => Number(clock.slice(0, 2)) * 60 + Number(clock.slice(3, 5));
+
+// "16:35" -> "4:35 pm"
+function clockLabel(clock) {
+  const hours = Number(clock.slice(0, 2));
+  return ((hours + 11) % 12) + 1 + ":" + clock.slice(3, 5) + (hours < 12 ? " am" : " pm");
+}
+
+function renderInOut() {
+  const body = document.getElementById("inout-rows");
+  if (!body) return;
+  body.replaceChildren();
+  staffInOut.forEach((entry) => {
+    const row = el("tr");
+    const date = readDate(entry.date);
+    row.append(el("td", "", date ? date.label.replace(/ \d{4}$/, "") : entry.date));
+    row.append(el("td", "mono", clockLabel(entry.in)));
+    if (entry.out) {
+      const worked = minutesOf(entry.out) - minutesOf(entry.in);
+      row.append(el("td", "mono", clockLabel(entry.out)));
+      row.append(el("td", "mono", Math.floor(worked / 60) + " h " + String(worked % 60).padStart(2, "0") + " min"));
+    } else {
+      const here = el("td");
+      here.append(el("span", "pill ok", "On campus"));
+      row.append(here, el("td", "muted", "Today"));
+    }
+    body.append(row);
+  });
+  setText("inout-days", staffInOut.length + " / " + staffInOut.length);
+  if (staffInOut.length > 0) {
+    const average = Math.round(staffInOut.reduce((sum, entry) => sum + minutesOf(entry.in), 0) / staffInOut.length);
+    setText("inout-average", clockLabel(String(Math.floor(average / 60)).padStart(2, "0") + ":" + String(average % 60).padStart(2, "0")));
+  }
+}
+
+/* ---------- staff: class alteration ---------- */
+
+// The weekly timetable. The server holds the same one and checks every
+// alteration against it; these values are used when there is no server.
+const ownClasses = {
+  Mon: { 1: "Database Systems · II MCA", 3: "Data Structures · I MCA", 5: "Database Systems lab · II MCA", 7: "Data Structures · I MCA" },
+  Tue: { 2: "Database Systems · II MCA", 4: "Data Structures · I MCA", 6: "Database Systems lab · II MCA" },
+  Wed: { 1: "Data Structures · I MCA", 3: "Database Systems · II MCA", 5: "Data Structures lab · I MCA" },
+  Thu: { 2: "Database Systems · II MCA", 5: "Data Structures · I MCA", 7: "Database Systems · II MCA" },
+  Fri: { 1: "Data Structures · I MCA", 4: "Database Systems · II MCA", 6: "Data Structures · I MCA" },
+  Sat: { 2: "Database Systems · II MCA", 3: "Data Structures · I MCA" },
+};
+
+const colleagueBusy = {
+  "Mr. Ravi T": { Mon: [1, 2, 5, 6], Tue: [1, 2, 3, 7], Wed: [2, 3, 4, 6], Thu: [1, 2, 4, 6], Fri: [1, 2, 3, 5], Sat: [1, 2] },
+  "Ms. Shalini G": { Mon: [2, 3, 4, 7], Tue: [2, 4, 5, 6], Wed: [1, 2, 5, 7], Thu: [3, 4, 5, 7], Fri: [2, 4, 6, 7], Sat: [3, 4] },
+  "Mr. Karthik R": { Mon: [1, 3, 6, 8], Tue: [1, 2, 3, 5, 8], Wed: [1, 3, 4, 8], Thu: [2, 5, 6, 8], Fri: [1, 4, 5, 8], Sat: [1, 2, 3] },
+};
+
+// Pick the date, then one of your own periods that day, then a colleague.
+// The colleague list holds only people with no class in that period.
+function setUpAlteration() {
+  const form = document.getElementById("alter-form");
+  if (!form) return;
+  const dateField = document.getElementById("alter-date");
+  const periodField = document.getElementById("alter-period");
+  const colleagueField = document.getElementById("alter-colleague");
+  const hint = document.getElementById("alter-hint");
+  const problem = document.getElementById("alter-error");
+
+  const fill = (select, options, placeholder) => {
+    select.replaceChildren();
+    const first = el("option", "", placeholder);
+    first.value = "";
+    select.append(first);
+    options.forEach(([value, label]) => {
+      const option = el("option", "", label);
+      option.value = value;
+      select.append(option);
+    });
+    select.disabled = options.length === 0;
+  };
+
+  const showColleagues = () => {
+    const date = readDate(dateField.value);
+    const period = Number(periodField.value);
+    problem.textContent = "";
+    if (!date || !period) {
+      fill(colleagueField, [], "Choose a period first");
+      hint.textContent = "";
+      return;
+    }
+    const names = Object.keys(colleagueBusy);
+    const free = names.filter((name) => !(colleagueBusy[name][date.day] || []).includes(period));
+    const busy = names.filter((name) => !free.includes(name));
+    fill(colleagueField, free.map((name) => [name, name]), free.length ? "Choose a colleague" : "Nobody is free");
+    const busyText = busy.length ? " Teaching then, so not offered: " + busy.join(", ") + "." : "";
+    hint.textContent = free.length
+      ? free.length + " of " + names.length + " colleagues are free in period " + period + "." + busyText
+      : "Nobody is free in period " + period + " on " + date.label + ". Choose another period, or ask the office." + busyText;
+  };
+
+  const showPeriods = () => {
+    const date = readDate(dateField.value);
+    const classes = date ? ownClasses[date.day] || {} : {};
+    const options = Object.keys(classes).map((period) => [period, "Period " + period + " · " + classes[period]]);
+    let placeholder = "Choose a date first";
+    if (date) placeholder = options.length ? "Choose your period" : "You have no classes on " + date.label;
+    fill(periodField, options, placeholder);
+    showColleagues();
+  };
+
+  dateField.addEventListener("change", showPeriods);
+  periodField.addEventListener("change", showColleagues);
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const date = readDate(dateField.value);
+    const period = Number(periodField.value);
+    const colleague = colleagueField.value;
+    if (!date) {
+      problem.textContent = "Choose the date of the class.";
+      dateField.focus();
+      return;
+    }
+    if (!period) {
+      problem.textContent = "Choose which of your periods needs covering.";
+      periodField.focus();
+      return;
+    }
+    if (!colleague) {
+      problem.textContent = colleagueField.disabled
+        ? "Nobody is free in that period, so this class cannot be altered."
+        : "Choose the colleague who will take the class.";
+      colleagueField.focus();
+      return;
+    }
+    const slot = "Period " + period + " on " + date.label;
+    if (loadState().requests.some((item) => item.kind === "duty" && item.text.startsWith(slot + " ("))) {
+      problem.textContent = "That class already has an alteration.";
+      return;
+    }
+    const text = slot + " (" + ownClasses[date.day][period] + ") goes to " + colleague + ", who is free in that period";
+    addRequest("duty", text, null, { date: dateField.value, period, colleague });
+    dateField.value = "";
+    showPeriods();
+    renderRequests();
+  });
+}
+
 /* ---------- alumni: directory search ---------- */
 
 const alumniDirectory = [
@@ -1733,6 +1907,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   setUpRequestForms();
   renderRequests();
   setUpAlumniSearch();
+  renderInOut();
+  setUpAlteration();
   renderNotifications();
 
   // without a server, another tab of this browser may act: pick that up at once

@@ -121,8 +121,24 @@
 
         <section class="card" id="duty">
           <h2>Duty alteration</h2>
-          <p class="sub">Only colleagues who are free and eligible are shown. Accepted changes reach salary calculation.</p>
-          <div class="row"><span>Invigilation · 14 Oct forenoon · you cannot attend</span><button type="button" class="btn outline" data-request="duty" data-ask="Who takes the duty" data-options="Mr. Ravi T|Ms. Shalini G|Mr. Karthik R" data-prefix="Invigilation on 14 Oct forenoon goes to " data-send="Send for approval">3 free staff</button></div>
+          <p class="sub">When you are on leave, hand a class to a colleague. Only colleagues with no class of their own in that period can be chosen. Approved changes reach salary calculation.</p>
+          <form class="form request-form" id="alter-form" novalidate>
+            <div class="request-times">
+              <div class="field">
+                <label for="alter-date">Date of the class</label>
+                <input id="alter-date" type="date">
+              </div>
+              <div class="field">
+                <label for="alter-period">Your period</label>
+                <select id="alter-period" disabled><option value="">Choose a date first</option></select>
+              </div>
+            </div>
+            <label for="alter-colleague">Colleague who is free in that period</label>
+            <select id="alter-colleague" disabled><option value="">Choose a period first</option></select>
+            <p class="note muted" id="alter-hint" aria-live="polite"></p>
+            <button type="submit" class="btn">Send for approval</button>
+            <p class="text-stop" id="alter-error" role="alert"></p>
+          </form>
           <div class="row"><span>Class swap · 9 Oct period 2</span><span class="pill ok">Accepted by colleague</span></div>
           <div data-my-requests="duty" aria-live="polite"></div>
         </section>
@@ -130,9 +146,18 @@
 
       <div class="grid-2">
         <section class="card" id="inout">
-          <h2>Staff in/out · this month</h2>
-          <div class="row"><span>Today</span><span class="mono">In 8:52 am</span></div>
-          <div class="row"><span>Working days present</span><span class="mono">6 / 6</span></div>
+          <h2>Your in and out times · this month</h2>
+          <p class="sub">Taken from the gate register. Each staff member sees only their own times.</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Date</th><th>In</th><th>Out</th><th>Hours</th></tr>
+              </thead>
+              <tbody id="inout-rows"></tbody>
+            </table>
+          </div>
+          <div class="row"><span>Working days present</span><span class="mono" id="inout-days">-</span></div>
+          <div class="row"><span>Average in time</span><span class="mono" id="inout-average">-</span></div>
           <div class="row"><span>Leave taken</span><span class="mono">0</span></div>
         </section>
 
