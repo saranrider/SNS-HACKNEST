@@ -12,6 +12,37 @@ const DEMO_STUDENT = "Karthik R";
 // staff page, or recording a fee on the admin page, shows up on the others.
 const STORE_KEY = "cms-demo-state";
 
+// Demo accounts for the sign-in page. This is NOT real authentication:
+// the check runs in the browser and the password is visible in this file.
+// A real deployment must verify credentials on a server.
+const DEMO_PASSWORD = "demo1234";
+const SESSION_KEY = "cms-demo-session";
+
+const accounts = [
+  { id: "karthik", role: "student", name: "Karthik R", title: "Student", page: "student.html" },
+  { id: "meena", role: "staff", name: "Dr. Meena K", title: "Staff", page: "staff.html" },
+  { id: "coe", role: "coe", name: "Examinations office", title: "COE", page: "coe.html" },
+  { id: "office", role: "admin", name: "College office", title: "Admin", page: "admin.html" },
+  { id: "lakshmi", role: "alumni", name: "Lakshmi V", title: "Alumni", page: "alumni.html" },
+];
+
+function currentSession() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY));
+  } catch (error) {
+    return null;
+  }
+}
+
+function signOut() {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch (error) {
+    // nothing stored
+  }
+  window.location.href = "index.html";
+}
+
 function loadState() {
   const state = { odApproved: [], feePaid: false };
   try {
@@ -604,6 +635,75 @@ function renderHallTickets() {
   setText("ht-issued-hint", HALL_TICKET_CLASS_SIZE - ready + " on hold");
 }
 
+/* ---------- sign in and page access ---------- */
+
+// Each dashboard declares its role on <body data-role>. Visitors who are
+// not signed in with that role are sent back to the sign-in page.
+function guardPage() {
+  const role = document.body.dataset.role;
+  if (!role) return true;
+
+  const session = currentSession();
+  if (!session || session.role !== role) {
+    window.location.replace("index.html");
+    return false;
+  }
+
+  const slot = document.getElementById("session");
+  if (slot) {
+    const button = el("button", "btn outline", "Sign out");
+    button.type = "button";
+    button.addEventListener("click", signOut);
+    slot.append(el("span", "session-user", session.name + " · " + session.title), button);
+  }
+  return true;
+}
+
+function setUpLogin() {
+  const form = document.getElementById("login-form");
+  if (!form) return;
+
+  const userId = document.getElementById("login-id");
+  const password = document.getElementById("login-password");
+  const error = document.getElementById("login-error");
+  const list = document.getElementById("demo-accounts");
+
+  accounts.forEach((account) => {
+    const button = el("button", "demo-account");
+    button.type = "button";
+    button.append(el("strong", "", account.title), el("span", "mono", account.id));
+    button.addEventListener("click", () => {
+      userId.value = account.id;
+      password.value = DEMO_PASSWORD;
+      error.textContent = "";
+    });
+    list.append(button);
+  });
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const typed = userId.value.trim().toLowerCase();
+    const account = accounts.find((item) => item.id === typed);
+
+    // one message for both cases, so the page does not reveal which IDs exist
+    if (!account || password.value !== DEMO_PASSWORD) {
+      error.textContent = "User ID or password is not correct. Use one of the demo accounts.";
+      return;
+    }
+
+    try {
+      localStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({ role: account.role, name: account.name, title: account.title })
+      );
+    } catch (storageError) {
+      error.textContent = "This browser is blocking storage, so sign-in cannot be kept.";
+      return;
+    }
+    window.location.href = account.page;
+  });
+}
+
 function setUpReset() {
   const button = document.getElementById("reset-demo");
   if (!button) return;
@@ -618,6 +718,8 @@ function setUpReset() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  if (!guardPage()) return;
+  setUpLogin();
   setUpReset();
   renderFees();
   renderHallTickets();
