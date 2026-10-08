@@ -1,4 +1,4 @@
-# College Management System: UI prototype (PS06)
+# PSNA Hacknext: UI prototype (PS06)
 
 A Prototype built for PSNA College of Engineering & Technology.
 
