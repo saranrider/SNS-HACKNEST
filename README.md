@@ -32,7 +32,7 @@ Use a demo account. The password for all of them is `demo1234`.
 | Admin | `admin` |
 | Alumni | `alumni` |
 
-Each dashboard opens only for its own role; anyone else is sent back to the sign-in page. This is a demonstration of the flow, not real security: the check runs in the browser and the password is in `app.js`. A real version needs a server to verify credentials.
+Each dashboard opens only for its own role; anyone else is sent back to the sign-in page. With the backend running, the password is checked on the server. Without it, the check runs in the browser, which shows the flow but is not real security.
 
 ## Side-by-side view
 
@@ -46,11 +46,12 @@ In the HTML these are marked with `data-followup="role#section"`; `openFollowUp`
 
 ## The pages are connected
 
-Actions are saved in the browser (`localStorage`) and read by every page, so one student's case can be followed across roles:
+Actions are read by every page, so one student's case can be followed across roles. With the backend they are stored on the server and shared across devices; without it they are kept in the browser (`localStorage`):
 
-1. Staff approves Devi's OD request: his attendance on the Student page moves from 74.5% to 77.6%, and the COE hall ticket row drops the "OD pending" reason.
-2. Admin records his fee payment: the accounts desk clears, no dues becomes 4 / 4, and the hall ticket shows "Ready to issue" on both the Student and COE pages.
-3. "Reset demo data" at the bottom of any page puts everything back.
+1. Staff approves Devi's OD request: her attendance on the Student page moves from 74.5% to 77.6%, and the COE hall ticket row drops the "OD pending" reason.
+2. Admin records her fee payment: the accounts desk clears, no dues becomes 4 / 4, and the hall ticket shows "Ready to issue" on both the Student and COE pages.
+3. A student sends a query, or staff report a campus issue: it appears at the Admin's support desk, and the sender sees it change to "Closed" when Admin closes it.
+4. "Reset demo data" at the bottom of any page puts everything back.
 
 ## What works
 
