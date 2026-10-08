@@ -50,18 +50,18 @@
         </div>
         <div class="stat">
           <div class="label">OD requests</div>
-          <div class="value">1</div>
-          <div class="hint wait">Waiting with HoD</div>
+          <div class="value" id="od-count">-</div>
+          <div class="hint" id="od-hint"></div>
         </div>
         <div class="stat">
           <div class="label">No dues</div>
-          <div class="value">3 / 4</div>
-          <div class="hint wait">Accounts desk pending</div>
+          <div class="value" id="dues-count">-</div>
+          <div class="hint" id="dues-hint"></div>
         </div>
         <div class="stat">
           <div class="label">Hall ticket</div>
-          <div class="value words">On hold</div>
-          <div class="hint stop">2 conditions not met</div>
+          <div class="value words" id="ht-status">-</div>
+          <div class="hint" id="ht-hint"></div>
         </div>
       </div>
 
@@ -89,11 +89,10 @@
         <ol class="steps">
           <li class="done"><small>Step 1 · Done</small><strong>Submitted</strong></li>
           <li class="done"><small>Step 2 · Done</small><strong>Organiser verified</strong></li>
-          <li class="done"><small>Step 3 · Done</small><strong>Advisor approved</strong></li>
-          <li class="current"><small>Step 4 · 1 day waiting</small><strong>HoD approval</strong></li>
-          <li><small>Step 5 · Automatic</small><strong>Attendance updated</strong></li>
+          <li id="step-approval"><small id="step-approval-label">Step 3</small><strong>Staff approval</strong></li>
+          <li id="step-updated"><small id="step-updated-label">Step 4</small><strong>Attendance updated</strong></li>
         </ol>
-        <p class="note">On approval, 6 periods are marked OD and your overall attendance moves from <strong id="od-before">-</strong> to <strong id="od-after">-</strong>.</p>
+        <p class="note" id="od-note"></p>
       </section>
 
       <div class="grid-2">
@@ -103,14 +102,14 @@
           <div class="row"><span>Library</span><span class="pill ok">Cleared automatically</span></div>
           <div class="row"><span>Laboratory</span><span class="pill ok">Cleared automatically</span></div>
           <div class="row"><span>Hostel</span><span class="pill ok">Cleared by warden</span></div>
-          <div class="row"><span>Accounts</span><span class="pill wait">Fee balance pending</span></div>
+          <div class="row"><span>Accounts</span><span class="pill" id="accounts-pill"></span></div>
         </section>
 
         <section class="card" id="hallticket">
           <h2>Hall ticket and performance</h2>
           <p class="sub">Issued by the Controller of Examinations when both conditions are met.</p>
-          <div class="row"><span>Attendance eligibility</span><span class="pill stop">Below 75%</span></div>
-          <div class="row"><span>No dues</span><span class="pill wait">3 of 4 desks</span></div>
+          <div class="row"><span>Attendance eligibility</span><span class="pill" id="ht-attendance"></span></div>
+          <div class="row"><span>No dues</span><span class="pill" id="ht-dues"></span></div>
           <div class="row"><span>Internal assessment 1</span><span class="mono">41 / 50</span></div>
           <div class="row"><span>Last semester GPA</span><span class="mono">8.12</span></div>
         </section>
@@ -181,6 +180,11 @@
       </div>
     </main>
   </div>
+
+  <footer class="page-foot">
+    <button type="button" class="btn outline" id="reset-demo">Reset demo data</button>
+    <span class="muted">Actions taken on one role's page carry over to the other pages in this browser.</span>
+  </footer>
 
   <script src="app.js"></script>
 </body>

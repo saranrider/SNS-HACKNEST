@@ -2,6 +2,33 @@
 // Every page loads this file; each section only runs if its container exists.
 
 const MIN_ATTENDANCE = 0.75;
+const DESK_COUNT = 4;
+const HALL_TICKET_CLASS_SIZE = 5;
+
+// The student whose record is followed across the five role pages.
+const DEMO_STUDENT = "Karthik R";
+
+// Actions are kept in the browser so that approving an OD request on the
+// staff page, or recording a fee on the admin page, shows up on the others.
+const STORE_KEY = "cms-demo-state";
+
+function loadState() {
+  const state = { odApproved: [], feePaid: false };
+  try {
+    Object.assign(state, JSON.parse(localStorage.getItem(STORE_KEY)) || {});
+  } catch (error) {
+    // storage blocked or corrupted: carry on with the defaults
+  }
+  return state;
+}
+
+function saveState(state) {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  } catch (error) {
+    // the page still works for this visit, it just will not carry over
+  }
+}
 
 // Sample records. Replace with data from the college's timetable and
 // attendance exports once the backend is connected.
@@ -14,7 +41,14 @@ const courses = [
 ];
 
 const odRequests = [
-  { student: "Karthik R", event: "Internal hackathon · 6 Oct", periods: 6, attended: 146, held: 196 },
+  {
+    student: "Karthik R",
+    event: "Internal hackathon · 6 Oct",
+    periods: 6,
+    attended: 146,
+    held: 196,
+    byCourse: { MC1302: 3, MC1305: 3 }, // periods missed in each course
+  },
   { student: "Divya S", event: "Zonal volleyball · 5 Oct", periods: 7, attended: 150, held: 196 },
   { student: "Arun P", event: "Placement drive · 7 Oct", periods: 4, attended: 158, held: 196 },
 ];
@@ -137,6 +171,30 @@ function shortageStatus(course) {
   return { text: "Cannot miss any", kind: "wait" };
 }
 
+// Builds the demo student's current position from the sample data plus
+// whatever has been approved or paid so far.
+function studentRecord(state) {
+  const request = odRequests.find((item) => item.student === DEMO_STUDENT);
+  const odApproved = state.odApproved.includes(DEMO_STUDENT);
+
+  const list = courses.map((course) => {
+    const credited = odApproved ? request.byCourse[course.code] || 0 : 0;
+    return Object.assign({}, course, { attended: course.attended + credited });
+  });
+  const held = list.reduce((sum, course) => sum + course.held, 0);
+  const attended = list.reduce((sum, course) => sum + course.attended, 0);
+
+  return {
+    courses: list,
+    held,
+    attended,
+    odApproved,
+    odPeriods: request.periods,
+    attendanceOk: attended / held >= MIN_ATTENDANCE,
+    desksCleared: state.feePaid ? DESK_COUNT : DESK_COUNT - 1,
+  };
+}
+
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -149,19 +207,23 @@ function setText(id, text) {
   if (node) node.textContent = text;
 }
 
+// Sets an element's classes and, when given, its text in one go.
+function setStatus(id, baseClass, kind, text) {
+  const node = document.getElementById(id);
+  if (!node) return;
+  node.className = (baseClass + " " + kind).trim();
+  if (text !== undefined) node.textContent = text;
+}
+
 /* ---------- student: attendance follow-up ---------- */
 
 function renderAttendance() {
   const body = document.getElementById("attendance-rows");
   if (!body) return;
 
-  let held = 0;
-  let attended = 0;
+  const record = studentRecord(loadState());
 
-  courses.forEach((course) => {
-    held += course.held;
-    attended += course.attended;
-
+  record.courses.forEach((course) => {
     const row = el("tr");
     const name = el("td");
     name.append(el("span", "mono muted", course.code), " " + course.name);
@@ -177,16 +239,64 @@ function renderAttendance() {
     body.append(row);
   });
 
-  const odPeriods = odRequests[0].periods;
-  const short = Math.ceil(MIN_ATTENDANCE * held - attended);
+  renderStudentStatus(record);
+}
 
-  setText("overall-attendance", percent(attended, held));
-  setText("od-before", percent(attended, held));
-  setText("od-after", percent(attended + odPeriods, held));
-  setText(
-    "overall-hint",
-    short > 0 ? short + " period short of 75%" : "Above the 75% rule"
-  );
+// Tiles, OD tracker, no dues and hall ticket for the student page.
+function renderStudentStatus(record) {
+  const now = percent(record.attended, record.held);
+  const short = Math.ceil(MIN_ATTENDANCE * record.held - record.attended);
+  const duesDone = record.desksCleared === DESK_COUNT;
+  const desksText = record.desksCleared + " of " + DESK_COUNT + " desks";
+
+  setText("overall-attendance", now);
+  if (record.attendanceOk) {
+    setStatus("overall-hint", "hint", "", "Above the 75% rule");
+  } else {
+    setStatus("overall-hint", "hint", "stop", short + " period short of 75%");
+  }
+
+  if (record.odApproved) {
+    setText("od-count", 0);
+    setStatus("od-hint", "hint", "", "Approved · attendance updated");
+    setStatus("step-approval", "", "done");
+    setStatus("step-updated", "", "done");
+    setText("step-approval-label", "Step 3 · Done");
+    setText("step-updated-label", "Step 4 · Done");
+    setText(
+      "od-note",
+      "Approved. " + record.odPeriods + " periods were marked OD and your overall attendance is now " + now + "."
+    );
+  } else {
+    const after = percent(record.attended + record.odPeriods, record.held);
+    setText("od-count", 1);
+    setStatus("od-hint", "hint", "wait", "Waiting with staff");
+    setStatus("step-approval", "", "current");
+    setStatus("step-updated", "", "");
+    setText("step-approval-label", "Step 3 · 1 day waiting");
+    setText("step-updated-label", "Step 4 · Automatic");
+    setText(
+      "od-note",
+      "On approval, " + record.odPeriods + " periods are marked OD and your overall attendance moves from " +
+        now + " to " + after + "."
+    );
+  }
+
+  setText("dues-count", record.desksCleared + " / " + DESK_COUNT);
+  setStatus("dues-hint", "hint", duesDone ? "" : "wait", duesDone ? "All desks cleared" : "Accounts desk pending");
+  setStatus("accounts-pill", "pill", duesDone ? "ok" : "wait", duesDone ? "Cleared on payment" : "Fee balance pending");
+
+  setStatus("ht-attendance", "pill", record.attendanceOk ? "ok" : "stop", record.attendanceOk ? "Eligible" : "Below 75%");
+  setStatus("ht-dues", "pill", duesDone ? "ok" : "wait", desksText);
+
+  const blocked = (record.attendanceOk ? 0 : 1) + (duesDone ? 0 : 1);
+  if (blocked === 0) {
+    setText("ht-status", "Ready to issue");
+    setStatus("ht-hint", "hint", "", "Both conditions met");
+  } else {
+    setText("ht-status", "On hold");
+    setStatus("ht-hint", "hint", "stop", blocked + (blocked === 1 ? " condition" : " conditions") + " not met");
+  }
 }
 
 /* ---------- student: project follow-up ---------- */
@@ -298,7 +408,8 @@ function renderOdApprovals() {
   const body = document.getElementById("od-rows");
   if (!body) return;
 
-  let pending = odRequests.length;
+  const state = loadState();
+  let pending = odRequests.filter((request) => !state.odApproved.includes(request.student)).length;
   setText("od-pending", pending);
 
   odRequests.forEach((request) => {
@@ -312,14 +423,24 @@ function renderOdApprovals() {
     row.append(el("td", "mono", before + " → " + after));
 
     const action = el("td");
-    const button = el("button", "btn", "Approve");
-    button.type = "button";
-    button.addEventListener("click", () => {
+    const showApproved = () => {
       action.replaceChildren(el("span", "pill ok", "Approved · record updated"));
-      pending -= 1;
-      setText("od-pending", pending);
-    });
-    action.append(button);
+    };
+
+    if (state.odApproved.includes(request.student)) {
+      showApproved();
+    } else {
+      const button = el("button", "btn", "Approve");
+      button.type = "button";
+      button.addEventListener("click", () => {
+        state.odApproved.push(request.student);
+        saveState(state);
+        showApproved();
+        pending -= 1;
+        setText("od-pending", pending);
+      });
+      action.append(button);
+    }
     row.append(action);
     body.append(row);
   });
@@ -358,10 +479,18 @@ function renderDesks() {
   const body = document.getElementById("desk-rows");
   if (!body) return;
 
-  const slowest = desks.reduce((a, b) => (b.waitDays > a.waitDays ? b : a));
-  const totalOpen = desks.reduce((sum, desk) => sum + desk.open, 0);
+  body.replaceChildren();
 
-  desks.forEach((desk) => {
+  // A recorded fee payment closes one request at the accounts desk.
+  const feePaid = loadState().feePaid;
+  const list = desks.map((desk) =>
+    desk.name === "Accounts" && feePaid ? Object.assign({}, desk, { open: desk.open - 1 }) : desk
+  );
+
+  const slowest = list.reduce((a, b) => (b.waitDays > a.waitDays ? b : a));
+  const totalOpen = list.reduce((sum, desk) => sum + desk.open, 0);
+
+  list.forEach((desk) => {
     const row = el("tr");
     row.append(el("td", "", desk.name));
     row.append(el("td", "mono", desk.autoCleared));
@@ -383,7 +512,77 @@ function renderDesks() {
   setText("slowest-desk", "Slowest desk: " + slowest.name);
 }
 
+/* ---------- admin: fee follow-up ---------- */
+
+const STUDENTS_WITH_BALANCE = 3;
+
+function renderFees() {
+  const slot = document.getElementById("fee-karthik");
+  if (!slot) return;
+
+  const state = loadState();
+  const showPaid = () => {
+    slot.replaceChildren(el("span", "pill ok", "Paid · accounts desk cleared"));
+    setText("fee-balance-count", STUDENTS_WITH_BALANCE - 1);
+  };
+
+  if (state.feePaid) {
+    showPaid();
+    return;
+  }
+
+  setText("fee-balance-count", STUDENTS_WITH_BALANCE);
+  const button = el("button", "btn outline", "Record payment");
+  button.type = "button";
+  button.addEventListener("click", () => {
+    state.feePaid = true;
+    saveState(state);
+    showPaid();
+    renderDesks();
+  });
+  slot.append(el("strong", "text-stop", "Exam fee due · blocks hall ticket"), button);
+}
+
+/* ---------- COE: hall ticket eligibility ---------- */
+
+function renderHallTickets() {
+  if (!document.getElementById("coe-status")) return;
+
+  const record = studentRecord(loadState());
+  const duesDone = record.desksCleared === DESK_COUNT;
+
+  const reasons = [];
+  if (!record.attendanceOk) reasons.push(record.odApproved ? "below 75%" : "OD pending");
+  if (!duesDone) reasons.push("fee due");
+  const onHold = reasons.length > 0;
+
+  setStatus("coe-attendance", "mono", record.attendanceOk ? "" : "text-stop", percent(record.attended, record.held));
+  setStatus("coe-dues", "", duesDone ? "" : "text-wait", record.desksCleared + " of " + DESK_COUNT + " desks");
+  setStatus("coe-status", "pill", onHold ? "stop" : "ok", onHold ? "On hold · " + reasons.join(", ") : "Ready to issue");
+
+  // three classmates already hold tickets, one is held for a library book
+  const ready = 3 + (onHold ? 0 : 1);
+  setText("ht-issued", ready + " / " + HALL_TICKET_CLASS_SIZE);
+  setText("ht-issued-hint", HALL_TICKET_CLASS_SIZE - ready + " on hold");
+}
+
+function setUpReset() {
+  const button = document.getElementById("reset-demo");
+  if (!button) return;
+  button.addEventListener("click", () => {
+    try {
+      localStorage.removeItem(STORE_KEY);
+    } catch (error) {
+      // nothing stored, nothing to clear
+    }
+    window.location.reload();
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  setUpReset();
+  renderFees();
+  renderHallTickets();
   renderAttendance();
   setUpProjectCheck();
   renderOdApprovals();
