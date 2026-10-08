@@ -15,6 +15,7 @@ Static, clickable screens for the five roles in our workflow diagram. Open `inde
 | `admin.html` | Admin and Support dashboard |
 | `alumni.html` | Alumni dashboard |
 | `split.html` | Two dashboards side by side, each with role tabs |
+| `images/` | One picture per role, used on the sign-in tiles and in the top bar |
 | `styles.css` | Shared blue and white theme |
 | `app.js` | Sample data and page logic |
 
