@@ -19,11 +19,11 @@ const DEMO_PASSWORD = "demo1234";
 const SESSION_KEY = "cms-demo-session";
 
 const accounts = [
-  { id: "devi", role: "student", name: "Devi", title: "Student", page: "student.html" },
-  { id: "saran", role: "staff", name: "Saran", title: "Staff", page: "staff.html" },
-  { id: "brundha", role: "coe", name: "Brundha", title: "COE", page: "coe.html" },
-  { id: "admin", role: "admin", name: "Admin", title: "Admin", page: "admin.html" },
-  { id: "alumni", role: "alumni", name: "Alumni", title: "Alumni", page: "alumni.html" },
+  { id: "devi", role: "student", name: "Devi", title: "Student", page: "student.html", about: "Attendance, OD, no dues, hall ticket" },
+  { id: "saran", role: "staff", name: "Saran", title: "Staff", page: "staff.html", about: "Approvals, attendance, question papers" },
+  { id: "brundha", role: "coe", name: "Brundha", title: "COE", page: "coe.html", about: "Syllabus, hall tickets, results" },
+  { id: "admin", role: "admin", name: "Admin", title: "Admin", page: "admin.html", about: "Fees, clearance, certificates" },
+  { id: "alumni", role: "alumni", name: "Alumni", title: "Alumni", page: "alumni.html", about: "Certificates, placement, community" },
 ];
 
 function currentSession() {
@@ -695,13 +695,23 @@ function setUpLogin() {
   const list = document.getElementById("demo-accounts");
 
   accounts.forEach((account) => {
-    const button = el("button", "demo-account");
+    const button = el("button", "role-tile");
     button.type = "button";
-    button.append(el("strong", "", account.title), el("span", "mono", account.id));
+    button.setAttribute("aria-pressed", "false");
+    button.append(
+      el("strong", "", account.title),
+      el("span", "", account.about),
+      el("span", "mono", "ID: " + account.id)
+    );
     button.addEventListener("click", () => {
       userId.value = account.id;
       password.value = DEMO_PASSWORD;
       error.textContent = "";
+      list.querySelectorAll(".role-tile").forEach((tile) => {
+        const chosen = tile === button;
+        tile.classList.toggle("selected", chosen);
+        tile.setAttribute("aria-pressed", chosen);
+      });
     });
     list.append(button);
   });
