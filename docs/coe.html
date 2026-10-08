@@ -25,6 +25,7 @@
       <a href="#hallticket">Hall ticket issue</a>
       <a href="#results">Exam conduct and results</a>
       <a href="#certificates">Certificate approval</a>
+      <a href="#requests">Requests</a>
     </nav>
 
     <main class="content">
@@ -36,6 +37,19 @@
       <section class="card overview" aria-label="Overview">
         <p class="overview-line" id="overview-line"></p>
         <div class="trackers" id="trackers"></div>
+      </section>
+
+      <section class="card" id="requests">
+        <div class="card-head">
+          <div>
+            <h2>Requests</h2>
+            <p class="sub">Anything not covered elsewhere goes to the admin office, who is told at once. You are told when it is accepted.</p>
+          </div>
+          <button type="button" class="btn" data-request="general" data-ask="What do you need" data-send="Send to admin office">New request</button>
+        </div>
+        <div data-my-requests="general" aria-live="polite"></div>
+        <h3 class="section-label">Sent to you</h3>
+        <div data-inbox="general hallticket" data-empty="Nothing is waiting for you." aria-live="polite"></div>
       </section>
 
       <div class="grid-2">

@@ -234,11 +234,17 @@ test("a new OD request reaches staff, and approving it notifies the student", as
   const state = async (token) => (await api.call("GET", "/api/state", null, token)).body;
 
   assert.equal((await api.call("POST", "/api/requests", { kind: "od", text: "x" }, student)).status, 400);
+  assert.equal((await api.call("POST", "/api/requests", { kind: "od", text: "Symposium" }, student)).status, 400, "dates are required");
+  const backwards = { kind: "od", text: "Symposium", from: "2026-10-12T13:00", to: "2026-10-12T09:00" };
+  assert.equal((await api.call("POST", "/api/requests", backwards, student)).status, 400, "end before start");
+  const notADate = { kind: "od", text: "Symposium", from: "tomorrow", to: "2026-10-12T09:00" };
+  assert.equal((await api.call("POST", "/api/requests", notADate, student)).status, 400);
   assert.equal((await api.call("POST", "/api/requests", { kind: "od", text: "Symposium" }, staff)).status, 403);
   assert.equal((await api.call("POST", "/api/requests", { kind: "nothing", text: "Symposium" }, student)).status, 404);
 
-  const sent = await api.call("POST", "/api/requests", { kind: "od", text: "Symposium at NIT Trichy, 12 Oct, 4 periods" }, student);
+  const sent = await api.call("POST", "/api/requests", { kind: "od", text: "Symposium at NIT Trichy", from: "2026-10-12T09:00", to: "2026-10-12T13:00" }, student);
   assert.equal(sent.status, 201);
+  assert.equal(sent.body.requests[0].text, "Symposium at NIT Trichy · from 12 Oct 2026, 09:00 to 12 Oct 2026, 13:00");
   assert.equal(sent.body.requests[0].status, "open");
   const id = sent.body.requests[0].id;
 
@@ -270,5 +276,46 @@ test("an alumni referral is published by the admin and students are told", async
   assert.match((await state(alumni)).notifications[0].text, /job referral was published by Admin/);
   assert.match((await state(student)).notifications[0].text, /alumni network/);
   assert.equal((await state(student)).requests.length, 0);
+  api.stop();
+});
+
+test("a request goes to the sender's own superior, and only that role can accept it", async () => {
+  const api = await start();
+  const tokens = {};
+  for (const id of ["devi", "saran", "brundha", "admin", "alumni"]) tokens[id] = await api.login(id);
+  const state = async (id) => (await api.call("GET", "/api/state", null, tokens[id])).body;
+  const ask = (id, text) => api.call("POST", "/api/requests", { kind: "general", text }, tokens[id]);
+
+  assert.equal((await ask("devi", "Bonafide letter for a bank loan")).body.requests[0].toRole, "staff");
+  assert.equal((await ask("saran", "Extra lab slot for II MCA")).body.requests.at(-1).toRole, "coe");
+  assert.equal((await ask("brundha", "Two more invigilators")).body.requests.at(-1).toRole, "admin");
+  assert.equal((await ask("alumni", "Duplicate degree certificate")).body.requests.at(-1).toRole, "admin");
+  assert.equal((await ask("admin", "Nobody above me")).status, 403);
+
+  const forStaff = (await state("saran")).requests.find((item) => item.fromName === "Devi");
+  assert.equal((await api.call("POST", "/api/requests/accept", { id: forStaff.id }, tokens.brundha)).status, 403);
+  assert.equal((await api.call("POST", "/api/requests/accept", { id: forStaff.id }, tokens.saran)).status, 200);
+  assert.match((await state("devi")).notifications[0].text, /Your request was accepted by Saran/);
+  api.stop();
+});
+
+test("a hall ticket request is issued by the COE only once the student is clear", async () => {
+  const api = await start();
+  const student = await api.login("devi");
+  const staff = await api.login("saran");
+  const admin = await api.login("admin");
+  const coe = await api.login("brundha");
+
+  const sent = await api.call("POST", "/api/requests", { kind: "hallticket", text: "End semester examination" }, student);
+  const id = sent.body.requests[0].id;
+  assert.equal((await api.call("POST", "/api/requests/accept", { id }, coe)).status, 409);
+
+  await api.call("POST", "/api/od/approve", { student: "Devi" }, staff);
+  await api.call("POST", "/api/fees/pay", { student: "Devi" }, admin);
+  assert.equal((await api.call("POST", "/api/requests/accept", { id }, coe)).status, 200);
+
+  const after = (await api.call("GET", "/api/state", null, student)).body;
+  assert.ok(after.decisions.includes("hallticket.devi"));
+  assert.match(after.notifications[0].text, /hall ticket request was issued by Brundha/);
   api.stop();
 });

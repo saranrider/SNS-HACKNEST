@@ -65,7 +65,11 @@ An element that is waiting on another role shows who has the next step when you 
 
 No control on any dashboard is decorative. A button either acts at once (approve, issue, verify, mark, record), opens a short form whose result goes to the role that must accept it (new OD request, duty change, certificate request, referral, mentoring, business listing, record update), or searches (the alumni directory). The one disabled button, "Send to COE after fixing gaps" on the Staff page, is disabled on purpose because the draft paper fails the blueprint check.
 
-A new OD request sent through the form is recorded and approved, but it does not change the attendance figures: only the sample hackathon request carries per-course periods.
+A new OD request asks for the event and a From and To date and time; the end must be later than the start, and the server checks this as well as the page. It is recorded and approved, but it does not change the attendance figures: only the sample hackathon request carries per-course periods.
+
+Requests go one step up. A student's "Request hall ticket" goes to the COE, who can issue it only once attendance and dues are clear. "Submit" on an assignment goes to staff. The "Requests" card on each dashboard takes anything else and sends it to that person's superior: student to class advisor, staff to COE, COE and alumni to the admin office. The person it is sent to sees it under "Sent to you" and accepts it there.
+
+The module menu runs along the top of each dashboard and stays in view while scrolling.
 
 ## The pages are connected
 

@@ -66,7 +66,11 @@ const DECISIONS = {
 // What one role can ask another to accept. "announce" names a role that is
 // also told once the request is accepted.
 const REQUEST_KINDS = {
-  od: { from: "student", to: "staff", label: "OD request", accepted: "approved" },
+  od: { from: "student", to: "staff", label: "OD request", accepted: "approved", dated: true },
+  hallticket: { from: "student", to: "coe", label: "Hall ticket request", accepted: "issued", needsReady: true, decision: "hallticket.devi" },
+  submission: { from: "student", to: "staff", label: "Assignment submission", accepted: "accepted" },
+  // anything else goes one step up: to the person's own superior
+  general: { toBy: { student: "staff", staff: "coe", coe: "admin", alumni: "admin" }, label: "Request", accepted: "accepted" },
   duty: { from: "staff", to: "admin", label: "Duty change", accepted: "approved" },
   certificate: { from: "alumni", to: "admin", label: "Certificate request", accepted: "issued" },
   referral: { from: "alumni", to: "admin", label: "Job referral", accepted: "published", announce: "student" },
@@ -74,6 +78,14 @@ const REQUEST_KINDS = {
   business: { from: "alumni", to: "admin", label: "Business listing", accepted: "listed" },
   profile: { from: "alumni", to: "admin", label: "Record update", accepted: "updated" },
 };
+
+// "2026-10-12T09:00" -> "12 Oct 2026, 09:00", or "" if it is not a date and time.
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function readableDateTime(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(String(value || ""));
+  if (!match || Number.isNaN(Date.parse(match[0]))) return "";
+  return Number(match[3]) + " " + MONTHS[Number(match[2]) - 1] + " " + match[1] + ", " + match[4] + ":" + match[5];
+}
 
 const DEMO_STUDENT = "Devi"; // the student whose case the staff, COE and admin pages follow
 
@@ -276,10 +288,22 @@ function createApp(store) {
     const kind = String((req.body && req.body.kind) || "");
     const rule = Object.prototype.hasOwnProperty.call(REQUEST_KINDS, kind) ? REQUEST_KINDS[kind] : null;
     if (!rule) return res.status(404).json({ error: "No such kind of request." });
-    if (req.user.role !== rule.from) return res.status(403).json({ error: "Only " + rule.from + " can send this." });
-    const text = String((req.body && req.body.text) || "").trim();
+    const toRole = rule.toBy ? rule.toBy[req.user.role] : rule.to;
+    if (rule.from ? req.user.role !== rule.from : !toRole) {
+      return res.status(403).json({ error: "Your role cannot send this kind of request." });
+    }
+    let text = String((req.body && req.body.text) || "").trim();
     if (text.length < 3 || text.length > 300) {
       return res.status(400).json({ error: "Write between 3 and 300 characters." });
+    }
+    if (rule.dated) {
+      const from = readableDateTime(req.body.from);
+      const to = readableDateTime(req.body.to);
+      if (!from || !to) return res.status(400).json({ error: "Give the from and to date and time." });
+      if (String(req.body.to) <= String(req.body.from)) {
+        return res.status(400).json({ error: "The end must be after the start." });
+      }
+      text += " · from " + from + " to " + to;
     }
     const request = {
       id: crypto.randomUUID().slice(0, 8),
@@ -287,12 +311,12 @@ function createApp(store) {
       text,
       fromUser: req.user.id,
       fromName: req.user.name,
-      toRole: rule.to,
+      toRole,
       raisedAt: new Date().toISOString(),
     };
     store.addRequest(request);
     record(req.user, "request.raise", kind + " " + request.id);
-    notifyRole(rule.to, "New " + rule.label.toLowerCase() + " from " + req.user.name + ": " + text);
+    notifyRole(toRole, "New " + rule.label.toLowerCase() + " from " + req.user.name + ": " + text);
     res.status(201).json(publicState(req.user));
   });
 
@@ -303,8 +327,13 @@ function createApp(store) {
     if (req.user.role !== request.toRole) {
       return res.status(403).json({ error: "Only " + request.toRole + " can accept this." });
     }
+    if (rule.needsReady && request.status === "open") {
+      const ready = store.approvedStudents().includes(request.fromName) && store.feeStatus(request.fromName) === "paid";
+      if (!ready) return res.status(409).json({ error: request.fromName + " is still on hold." });
+    }
     if (store.acceptRequest(request.id, req.user.id) === "done") {
       record(req.user, "request.accept", request.kind + " " + request.id);
+      if (rule.decision) store.addDecision(rule.decision, req.user.id);
       store.addNotification(request.fromUser, "Your " + rule.label.toLowerCase() + " was " + rule.accepted + " by " + req.user.name + ": " + request.text);
       if (rule.announce) notifyRole(rule.announce, "New from the alumni network (" + rule.label.toLowerCase() + "): " + request.text);
     }
