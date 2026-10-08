@@ -1,7 +1,7 @@
 {
   "name": "psna-hacknext-server",
   "version": "1.0.0",
-  "description": "Backend for the PSNA Hacknext prototype: sign-in, shared state and the two cross-role actions",
+  "description": "Backend for the PSNA Hacknext prototype: sign-in and shared records in a SQLite database",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -11,6 +11,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "better-sqlite3": "^13.0.3",
     "express": "^4.21.2"
   }
 }

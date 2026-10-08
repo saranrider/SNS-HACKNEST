@@ -5,7 +5,7 @@ const crypto = require("node:crypto");
 const path = require("node:path");
 const express = require("express");
 const { createStore } = require("./store");
-const { seedRecords, hashPassword } = require("./seed");
+const { hashPassword } = require("./seed");
 
 const SESSION_HOURS = 8;
 const TICKET_OWNERS = ["Support desk", "Class advisor", "Accounts", "Examinations"];
@@ -14,7 +14,6 @@ const LOCK_SECONDS = 60;
 
 function createApp(store) {
   const app = express();
-  const db = store.data;
   const sessions = new Map(); // token -> { userId, expires }
   const failures = new Map(); // user id -> { count, lockedUntil }
 
@@ -33,17 +32,15 @@ function createApp(store) {
   });
 
   function record(user, action, target) {
-    db.audit.push({ at: new Date().toISOString(), user: user.id, role: user.role, action, target });
-    if (db.audit.length > 200) db.audit.shift();
+    store.addAudit({ at: new Date().toISOString(), user: user.id, role: user.role, action, target });
   }
 
   // The shape the pages expect: who has an approved OD, and Devi's fee.
   function publicState() {
-    const demoFee = db.fees.find((fee) => fee.student === "Devi");
     return {
-      odApproved: db.odRequests.filter((r) => r.status === "approved").map((r) => r.student),
-      feePaid: demoFee.status === "paid",
-      tickets: db.tickets,
+      odApproved: store.approvedStudents(),
+      feePaid: store.feeStatus("Devi") === "paid",
+      tickets: store.tickets(),
     };
   }
 
@@ -55,7 +52,7 @@ function createApp(store) {
       sessions.delete(token);
       return res.status(401).json({ error: "Sign in first." });
     }
-    req.user = db.users.find((user) => user.id === session.userId);
+    req.user = store.findUser(session.userId);
     req.token = token;
     next();
   }
@@ -79,7 +76,7 @@ function createApp(store) {
       return res.status(429).json({ error: "Too many attempts. Try again in " + wait + " seconds." });
     }
 
-    const user = db.users.find((item) => item.id === id);
+    const user = store.findUser(id);
     // Hash even when the user does not exist, so both cases take the same time.
     const salt = user ? user.salt : "00";
     const given = Buffer.from(hashPassword(password, salt), "hex");
@@ -111,34 +108,24 @@ function createApp(store) {
   app.get("/api/state", requireUser, (req, res) => res.json(publicState()));
 
   app.post("/api/od/approve", requireUser, requireRole("staff"), (req, res) => {
-    const request = db.odRequests.find((item) => item.student === (req.body && req.body.student));
-    if (!request) return res.status(404).json({ error: "No OD request for that student." });
-    if (request.status !== "approved") {
-      request.status = "approved";
-      request.approvedBy = req.user.id;
-      request.approvedAt = new Date().toISOString();
-      record(req.user, "od.approve", request.student);
-      store.save();
-    }
+    const student = String((req.body && req.body.student) || "");
+    const outcome = store.approveOd(student, req.user.id);
+    if (outcome === "missing") return res.status(404).json({ error: "No OD request for that student." });
+    if (outcome === "done") record(req.user, "od.approve", student);
     res.json(publicState());
   });
 
   app.post("/api/fees/pay", requireUser, requireRole("admin"), (req, res) => {
-    const fee = db.fees.find((item) => item.student === (req.body && req.body.student));
-    if (!fee) return res.status(404).json({ error: "No fee record for that student." });
-    if (fee.status !== "paid") {
-      fee.status = "paid";
-      fee.recordedBy = req.user.id;
-      fee.paidAt = new Date().toISOString();
-      record(req.user, "fee.pay", fee.student);
-      store.save();
-    }
+    const student = String((req.body && req.body.student) || "");
+    const outcome = store.payFee(student, req.user.id);
+    if (outcome === "missing") return res.status(404).json({ error: "No fee record for that student." });
+    if (outcome === "done") record(req.user, "fee.pay", student);
     res.json(publicState());
   });
 
   // The records the dashboards draw from.
   app.get("/api/records", requireUser, (req, res) => {
-    res.json({ courses: db.courses, odRequests: db.odRequests, desks: db.desks });
+    res.json({ courses: store.courses(), odRequests: store.odRequests(), desks: store.desks() });
   });
 
   // A student's query or a staff member's campus issue.
@@ -157,19 +144,17 @@ function createApp(store) {
       status: "open",
       raisedAt: new Date().toISOString(),
     };
-    db.tickets.push(ticket);
+    store.addTicket(ticket);
     record(req.user, "ticket.raise", ticket.id);
-    store.save();
     res.status(201).json(publicState());
   });
 
   app.post("/api/tickets/close", requireUser, requireRole("admin"), (req, res) => {
-    const ticket = db.tickets.find((item) => item.id === (req.body && req.body.id));
-    if (!ticket) return res.status(404).json({ error: "No ticket with that ID." });
-    ticket.status = "closed";
-    ticket.closedBy = req.user.id;
-    record(req.user, "ticket.close", ticket.id);
-    store.save();
+    const id = String((req.body && req.body.id) || "");
+    if (store.closeTicket(id, req.user.id) === "missing") {
+      return res.status(404).json({ error: "No ticket with that ID." });
+    }
+    record(req.user, "ticket.close", id);
     res.json(publicState());
   });
 
@@ -178,14 +163,13 @@ function createApp(store) {
     if (req.user.role !== "admin" && req.user.role !== "coe") {
       return res.status(403).json({ error: "Only admin and COE can read the audit log." });
     }
-    res.json(db.audit.slice(-50).reverse());
+    res.json(store.recentAudit(50));
   });
 
   // Puts the demo records back to the start. Users and passwords are kept.
   app.post("/api/reset", requireUser, (req, res) => {
-    Object.assign(db, seedRecords());
+    store.reset();
     record(req.user, "demo.reset", "all");
-    store.save();
     res.json(publicState());
   });
 
@@ -197,7 +181,7 @@ function createApp(store) {
 
 if (require.main === module) {
   const port = process.env.PORT || 3000;
-  const store = createStore(path.join(__dirname, "data", "db.json"));
+  const store = createStore(process.env.DATABASE_FILE || path.join(__dirname, "data", "hacknext.db"));
   createApp(store).listen(port, () => {
     console.log("PSNA Hacknext is running at http://localhost:" + port);
   });

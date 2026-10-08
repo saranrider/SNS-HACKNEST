@@ -125,3 +125,24 @@ test("records come from the server and need a sign-in", async () => {
   assert.equal(records.body.desks.length, 4);
   api.stop();
 });
+
+test("records are kept in the database file across a restart", async () => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const path = require("node:path");
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "hacknext-")), "test.db");
+
+  const first = createStore(file);
+  assert.equal(first.approveOd("Devi", "saran"), "done");
+  first.addTicket({ id: "t1", text: "Bus pass", owner: "Support desk", raisedBy: "Devi", status: "open", raisedAt: "2026-10-08T00:00:00Z" });
+  first.close();
+
+  const second = createStore(file);
+  assert.deepEqual(second.approvedStudents(), ["Devi"]);
+  assert.equal(second.tickets().length, 1);
+  assert.equal(second.findUser("devi").role, "student", "users are not created twice");
+  second.reset();
+  assert.deepEqual(second.approvedStudents(), []);
+  assert.equal(second.courses().length, 5);
+  second.close();
+});

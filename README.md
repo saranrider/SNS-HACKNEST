@@ -20,7 +20,7 @@ Then open http://localhost:3000 and sign in with a demo account (the IDs are on 
 With the server running:
 
 - the password is checked on the server, and five wrong attempts lock that ID for a minute;
-- records are stored on the server (`server/data/db.json`), so two people on two devices see each other's actions within a few seconds;
+- records are stored in a SQLite database on the server (`server/data/hacknext.db`), so two people on two devices see each other's actions within a few seconds;
 - the courses, OD requests and desk figures the pages show are read from the server;
 - only Staff can approve an OD request, and only Admin can record a fee or close a support ticket; the server refuses anyone else;
 - a student's query or a staff member's campus issue is saved as a ticket that the Admin's support desk sees and closes;
@@ -55,6 +55,22 @@ cd server
 npm test
 ```
 
+## The database
+
+The server keeps its records in SQLite, in `server/data/hacknext.db`. The file is created with the demo users and records the first time the server starts; delete it to start again from scratch. Set `DATABASE_FILE` to keep it somewhere else.
+
+| Table | Holds |
+|---|---|
+| `users` | The five accounts, with a salt and password hash each |
+| `courses` | Classes held and attended per course |
+| `od_requests` | OD requests, who approved each and when |
+| `desks` | The four no-dues desks and their figures |
+| `fees` | Fee items, who recorded each payment and when |
+| `tickets` | Student queries and staff campus issues |
+| `audit` | Who did what and when |
+
+All the SQL is in `server/store.js`; the routes in `server.js` only call its functions.
+
 ## Putting it online
 
 `render.yaml` describes the server for Render (render.com): choose New, then Blueprint, pick this repository, and Render builds and starts it. The one address then serves both the pages and the API. On the free plan the disk is not kept, so the records go back to the starting data whenever the service restarts.
@@ -65,7 +81,7 @@ If the pages are on GitHub Pages and the server is on another address, set that 
 
 ## Limits of this prototype
 
-- The data is sample data, and the store is a single JSON file, which suits a demo and not real use.
+- The data is sample data. SQLite is a real database but lives in one file on one machine; a college-wide system would move to a database server such as PostgreSQL.
 - Sessions are kept in memory, so restarting the server signs everyone out.
 - Some lists on the pages (assignments, circulars, syllabus status and similar) are still fixed sample text in the HTML.
 - The side-by-side view signs each pane in with that role's demo account so it can be shown without a sign-in step.
