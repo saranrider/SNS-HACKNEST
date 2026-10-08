@@ -37,6 +37,81 @@ const desks = [
   { name: "Accounts", autoCleared: 36, open: 6, waitDays: 2.6 },
 ];
 
+// Projects completed by earlier batches. A new proposal is compared with these.
+const pastProjects = [
+  {
+    title: "Smart attendance system using face recognition",
+    year: 2024,
+    team: "Batch 6, MCA 2022-24",
+    guide: "Dr. Meena K",
+    summary:
+      "Classroom camera images are used to detect and recognise student faces with a deep learning model and mark attendance for each period.",
+    done: ["Face detection and recognition model", "Attendance marked for one classroom"],
+    remaining: ["Works poorly in low light", "Not linked to the college attendance record", "No check against proxy photos"],
+    files: ["Project report", "Source code", "Face image dataset"],
+  },
+  {
+    title: "Crop disease detection from leaf images",
+    year: 2025,
+    team: "Batch 3, MCA 2023-25",
+    guide: "Mr. Ravi T",
+    summary:
+      "A convolutional neural network classifies leaf photographs into healthy and diseased classes for paddy and tomato crops.",
+    done: ["Trained classifier for two crops", "Android demo app"],
+    remaining: ["More crops", "Offline use in the field"],
+    files: ["Project report", "Source code", "Leaf image dataset"],
+  },
+  {
+    title: "Library book recommendation using borrowing history",
+    year: 2023,
+    team: "Batch 9, MCA 2021-23",
+    guide: "Ms. Shalini G",
+    summary:
+      "Collaborative filtering on library borrowing records suggests books to students based on what similar readers borrowed.",
+    done: ["Recommendation model", "Web page for suggestions"],
+    remaining: ["Cold start for new students", "Link to live library data"],
+    files: ["Project report", "Source code"],
+  },
+];
+
+// A proposal at or above this similarity is treated as the same project.
+const MATCH_THRESHOLD = 0.4;
+
+const STOP_WORDS = new Set([
+  "the", "and", "for", "with", "from", "using", "based", "system", "are", "was", "that", "this",
+  "into", "each", "what", "used", "use", "student", "students", "project", "model", "automatically",
+]);
+
+function keywords(text) {
+  const words = text.toLowerCase().match(/[a-z]+/g) || [];
+  const kept = words
+    .filter((word) => word.length > 2 && !STOP_WORDS.has(word))
+    .map((word) => word.replace(/(ing|ed|es|s)$/, ""));
+  return new Set(kept);
+}
+
+// Share of the smaller keyword set that also appears in the other one (0 to 1).
+function similarity(textA, textB) {
+  const a = keywords(textA);
+  const b = keywords(textB);
+  if (a.size === 0 || b.size === 0) return 0;
+  let shared = 0;
+  a.forEach((word) => {
+    if (b.has(word)) shared += 1;
+  });
+  return shared / Math.min(a.size, b.size);
+}
+
+function closestProject(title, abstract) {
+  const proposal = title + " " + abstract;
+  let best = null;
+  pastProjects.forEach((project) => {
+    const score = similarity(proposal, project.title + " " + project.summary);
+    if (!best || score > best.score) best = { project, score };
+  });
+  return best;
+}
+
 function percent(attended, held) {
   return ((attended / held) * 100).toFixed(1) + "%";
 }
@@ -112,6 +187,109 @@ function renderAttendance() {
     "overall-hint",
     short > 0 ? short + " period short of 75%" : "Above the 75% rule"
   );
+}
+
+/* ---------- student: project follow-up ---------- */
+
+function bulletList(items) {
+  const list = el("ul", "plain-list");
+  items.forEach((item) => list.append(el("li", "", item)));
+  return list;
+}
+
+function showNewProject(result, score) {
+  result.append(el("span", "pill ok", "No earlier project matches"));
+  result.append(
+    el(
+      "p",
+      "note",
+      "Closest earlier project is only " + Math.round(score * 100) + "% similar. " +
+        "Your proposal is registered as a new project and sent to your guide."
+    )
+  );
+}
+
+function showMatchedProject(result, match, imageUrl) {
+  const project = match.project;
+
+  result.append(el("span", "pill wait", Math.round(match.score * 100) + "% match with an earlier project"));
+  result.append(el("h3", "match-title", project.title));
+  result.append(el("p", "muted", project.year + " · " + project.team + " · Guide: " + project.guide));
+
+  result.append(el("div", "section-label", "Already done"));
+  result.append(bulletList(project.done));
+  result.append(el("div", "section-label", "Left for you to continue"));
+  result.append(bulletList(project.remaining));
+
+  result.append(el("div", "section-label", "Access given to you"));
+  project.files.forEach((file) => {
+    const row = el("div", "row");
+    row.append(el("span", "", file), el("span", "pill ok", "Unlocked"));
+    result.append(row);
+  });
+
+  const footer = el("div", "actions");
+  const button = el("button", "btn", "Continue this project");
+  button.type = "button";
+  button.addEventListener("click", () => {
+    const done = el("div", "notice");
+    done.append(
+      el("strong", "", "Continuation registered. "),
+      "Your graphical abstract is attached and the request is with " + project.guide + " for approval."
+    );
+    if (imageUrl) {
+      const image = el("img", "abstract-preview");
+      image.src = imageUrl;
+      image.alt = "Your graphical abstract";
+      done.append(image);
+    }
+    footer.replaceWith(done);
+  });
+  footer.append(button, el("span", "muted", "This topic cannot be registered again as a new project."));
+  result.append(footer);
+}
+
+function setUpProjectCheck() {
+  const form = document.getElementById("project-form");
+  if (!form) return;
+
+  const title = document.getElementById("project-title");
+  const abstract = document.getElementById("project-abstract");
+  const fileInput = document.getElementById("project-image");
+  const preview = document.getElementById("project-preview");
+  const error = document.getElementById("project-error");
+  const result = document.getElementById("project-result");
+  let imageUrl = null;
+
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (imageUrl) URL.revokeObjectURL(imageUrl);
+    imageUrl = file ? URL.createObjectURL(file) : null;
+    preview.hidden = !file;
+    if (file) preview.src = imageUrl;
+  });
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    error.textContent = "";
+
+    if (!title.value.trim() || !abstract.value.trim()) {
+      error.textContent = "Enter the project title and abstract.";
+      return;
+    }
+    if (!fileInput.files[0]) {
+      error.textContent = "Add your graphical abstract before comparing.";
+      return;
+    }
+
+    const match = closestProject(title.value, abstract.value);
+    result.replaceChildren(el("div", "section-label", "Result"));
+    if (match.score >= MATCH_THRESHOLD) {
+      showMatchedProject(result, match, imageUrl);
+    } else {
+      showNewProject(result, match.score);
+    }
+  });
 }
 
 /* ---------- staff: OD approvals ---------- */
@@ -207,6 +385,7 @@ function renderDesks() {
 
 document.addEventListener("DOMContentLoaded", () => {
   renderAttendance();
+  setUpProjectCheck();
   renderOdApprovals();
   renderBlueprint();
   renderDesks();
