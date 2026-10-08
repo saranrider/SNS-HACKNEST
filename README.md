@@ -1,18 +1,35 @@
 # College Management System: UI prototype (PS06)
 
+A student hackathon prototype built for PSNA College of Engineering & Technology. It is not an official college system.
+
 Static, clickable screens for the five roles in our workflow diagram. Open `index.html` in a browser; there is no build step and no server.
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `index.html` | Student dashboard |
+| `index.html` | Sign-in page |
+| `student.html` | Student dashboard |
 | `staff.html` | Staff dashboard |
 | `coe.html` | Controller of Examinations dashboard |
 | `admin.html` | Admin and Support dashboard |
 | `alumni.html` | Alumni dashboard |
 | `styles.css` | Shared blue and white theme |
 | `app.js` | Sample data and page logic |
+
+## Signing in
+
+Use a demo account. The password for all of them is `demo1234`.
+
+| Role | User ID |
+|---|---|
+| Student | `karthik` |
+| Staff | `meena` |
+| COE | `coe` |
+| Admin | `office` |
+| Alumni | `lakshmi` |
+
+Each dashboard opens only for its own role; anyone else is sent back to the sign-in page. This is a demonstration of the flow, not real security: the check runs in the browser and the password is in `app.js`. A real version needs a server to verify credentials.
 
 ## The pages are connected
 
@@ -24,7 +41,7 @@ Actions are saved in the browser (`localStorage`) and read by every page, so one
 
 ## What works
 
-- The top bar switches between roles.
+- The top bar shows who is signed in and has Sign out.
 - Student: the readiness panel at the top shows the two conditions for the hall ticket (attendance against the 75% line, and the four no-dues desks) and the ticket itself, which fills in once both are met.
 - Student: the attendance table and shortage meter are calculated in `app.js` from the `courses` array, using the 75% rule.
 - Student: Project follow-up compares a new proposal (title, abstract, graphical abstract) with the `pastProjects` array. A match unlocks the earlier project's files and the student continues it; otherwise it is registered as new. Matching is on title and abstract keywords; the image is attached but not compared yet.

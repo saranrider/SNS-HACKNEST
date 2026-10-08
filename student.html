@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student · College Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-role="student">
+  <header class="topbar">
+    <div class="brand">
+      <strong>College Management System</strong>
+      <span>PSNA College of Engineering &amp; Technology · student prototype, not an official system</span>
+    </div>
+    <div class="session" id="session"></div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidenav" aria-label="Student modules">
+      <h2>Student modules</h2>
+      <a href="#attendance">Attendance follow-up</a>
+      <a href="#od">OD requests</a>
+      <a href="#nodues">No dues</a>
+      <a href="#hallticket">Hall ticket and performance</a>
+      <a href="#assignments">Assignment reminders</a>
+      <a href="#project">Project follow-up</a>
+      <a href="#circulars">Circulars</a>
+      <a href="#query">Query</a>
+    </nav>
+
+    <main class="content">
+      <div class="page-head">
+        <h1>Student dashboard</h1>
+        <p>Karthik R · II MCA · Semester 3 · Sample data</p>
+      </div>
+
+      <section class="card readiness" aria-label="Hall ticket readiness">
+        <div class="readiness-gates">
+          <p class="readiness-line" id="hero-line"></p>
+
+          <div class="gate">
+            <div class="gate-head">
+              <span class="gate-name">Attendance</span>
+              <span class="gate-value mono" id="overall-attendance">-</span>
+            </div>
+            <div class="meter" aria-hidden="true">
+              <span class="meter-fill" id="att-fill"></span>
+              <span class="meter-ghost" id="att-ghost"></span>
+              <span class="meter-mark"></span>
+            </div>
+            <div class="meter-scale" aria-hidden="true"><span>60%</span><span>75% needed</span><span>90%</span></div>
+            <div class="hint" id="overall-hint"></div>
+            <div class="hint" id="od-hint"></div>
+          </div>
+
+          <div class="gate">
+            <div class="gate-head">
+              <span class="gate-name">No dues</span>
+              <span class="gate-value mono" id="dues-count">-</span>
+            </div>
+            <ol class="desks">
+              <li class="cleared">Library</li>
+              <li class="cleared">Laboratory</li>
+              <li class="cleared">Hostel</li>
+              <li id="desk-accounts">Accounts</li>
+            </ol>
+            <div class="hint" id="dues-hint"></div>
+          </div>
+        </div>
+
+        <div class="ticket" id="ticket">
+          <span class="ticket-label">Hall ticket</span>
+          <strong class="ticket-status" id="ht-status">-</strong>
+          <span class="hint" id="ht-hint"></span>
+          <span class="ticket-foot">Karthik R · II MCA<br>End semester examination</span>
+        </div>
+      </section>
+
+      <section class="card" id="attendance">
+        <h2>Attendance follow-up</h2>
+        <p class="sub">Minimum 75% per course. The last column tells you how many periods you can still miss, or must attend.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Course</th><th>Held</th><th>Attended</th><th>Percent</th><th>Shortage meter</th></tr>
+            </thead>
+            <tbody id="attendance-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" id="od">
+        <div class="card-head">
+          <div>
+            <h2>OD request tracker</h2>
+            <p class="sub">Internal hackathon, 6 Oct 2026 · 6 periods missed · participant list verified by the organiser</p>
+          </div>
+          <button type="button" class="btn">New OD request</button>
+        </div>
+        <ol class="steps">
+          <li class="done"><small>Step 1 · Done</small><strong>Submitted</strong></li>
+          <li class="done"><small>Step 2 · Done</small><strong>Organiser verified</strong></li>
+          <li id="step-approval"><small id="step-approval-label">Step 3</small><strong>Staff approval</strong></li>
+          <li id="step-updated"><small id="step-updated-label">Step 4</small><strong>Attendance updated</strong></li>
+        </ol>
+        <p class="note" id="od-note"></p>
+      </section>
+
+      <div class="grid-2">
+        <section class="card" id="nodues">
+          <h2>No dues clearance</h2>
+          <p class="sub">All desks see the request at the same time.</p>
+          <div class="row"><span>Library</span><span class="pill ok">Cleared automatically</span></div>
+          <div class="row"><span>Laboratory</span><span class="pill ok">Cleared automatically</span></div>
+          <div class="row"><span>Hostel</span><span class="pill ok">Cleared by warden</span></div>
+          <div class="row"><span>Accounts</span><span class="pill" id="accounts-pill"></span></div>
+        </section>
+
+        <section class="card" id="hallticket">
+          <h2>Hall ticket and performance</h2>
+          <p class="sub">Issued by the Controller of Examinations when both conditions are met.</p>
+          <div class="row"><span>Attendance eligibility</span><span class="pill" id="ht-attendance"></span></div>
+          <div class="row"><span>No dues</span><span class="pill" id="ht-dues"></span></div>
+          <div class="row"><span>Internal assessment 1</span><span class="mono">41 / 50</span></div>
+          <div class="row"><span>Last semester GPA</span><span class="mono">8.12</span></div>
+        </section>
+      </div>
+
+      <div class="grid-2">
+        <section class="card" id="assignments">
+          <h2>Assignment reminders</h2>
+          <div class="row"><span>DBMS · Normalisation exercise</span><strong class="text-stop">Due tomorrow</strong></div>
+          <div class="row"><span>Digital Marketing · Campaign brief</span><strong class="text-wait">Due 12 Oct</strong></div>
+          <div class="row"><span>Operating Systems · Scheduling lab record</span><span class="muted">Due 16 Oct</span></div>
+        </section>
+
+        <section class="card" id="circulars">
+          <h2>Circulars for you</h2>
+          <p class="sub">Only notices that apply to II MCA.</p>
+          <div class="row"><span>Exam fee payment<span class="detail">Pay at the accounts desk or online · by 15 Oct</span></span></div>
+          <div class="row"><span>Internal assessment 2 timetable<span class="detail">Starts 26 Oct · check your slots</span></span></div>
+          <div class="row"><span>Placement training registration<span class="detail">Register with the placement cell · by 20 Oct</span></span></div>
+        </section>
+      </div>
+
+      <section class="card" id="project">
+        <h2>Project follow-up</h2>
+        <p class="sub">Every new proposal is compared with projects done by earlier students. If it matches one, you get access to that work and continue it from where it stopped.</p>
+        <div class="grid-2">
+          <form class="form" id="project-form">
+            <label for="project-title">Project title</label>
+            <input id="project-title" type="text" value="Face recognition based attendance system for classrooms">
+            <label for="project-abstract">Abstract</label>
+            <textarea id="project-abstract" rows="4">A camera in the classroom captures student faces, a deep learning model recognises each student, and attendance is marked automatically for the period.</textarea>
+            <label for="project-image">Graphical abstract (image)</label>
+            <input id="project-image" type="file" accept="image/*">
+            <img id="project-preview" class="abstract-preview" alt="Preview of your graphical abstract" hidden>
+            <button type="submit" class="btn">Compare with earlier projects</button>
+            <p id="project-error" class="text-stop" role="alert"></p>
+          </form>
+          <div id="project-result" aria-live="polite">
+            <div class="section-label">Result</div>
+            <p class="muted note">Add your title, abstract and graphical abstract, then compare.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid-2">
+        <section class="card" id="project-reviews">
+          <h2>Project reviews</h2>
+          <div class="row"><span>Review 1 · Problem and literature</span><span class="pill ok">Accepted</span></div>
+          <div class="row"><span>Review 2 · Design</span><span class="pill wait">Guide asked for changes</span></div>
+          <div class="row"><span>Alumni mentor</span><span class="pill">Matched</span></div>
+        </section>
+
+        <section class="card" id="query">
+          <h2>Raise a query</h2>
+          <form class="form">
+            <label for="query-desk">Send to</label>
+            <select id="query-desk">
+              <option>Support desk</option>
+              <option>Class advisor</option>
+              <option>Accounts</option>
+              <option>Examinations</option>
+            </select>
+            <label for="query-text">Your question</label>
+            <textarea id="query-text" rows="3"></textarea>
+            <button type="button" class="btn">Send query</button>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <footer class="page-foot">
+    <button type="button" class="btn outline" id="reset-demo">Reset demo data</button>
+    <span class="muted">Actions taken on one role's page carry over to the other pages in this browser.</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
