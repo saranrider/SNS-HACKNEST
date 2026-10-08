@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · College Management System (student prototype)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="front">
+  <header class="front-band">
+    <div class="front-band-inner">
+      <!-- generic mark, not the college's logo -->
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 18 24 8l20 10-20 10L4 18Z"></path>
+        <path d="M12 23v10c3 4 7 6 12 6s9-2 12-6V23"></path>
+        <path d="M44 18v12"></path>
+      </svg>
+      <div class="front-title">
+        <h1>College Management System</h1>
+        <p>Built by students for PSNA College of Engineering &amp; Technology</p>
+      </div>
+      <span class="prototype-tag">Hackathon prototype · not an official system</span>
+    </div>
+  </header>
+
+  <main class="front-card">
+    <section>
+      <p class="section-label">Step 1</p>
+      <h2>Who is signing in?</h2>
+      <div class="role-tiles" id="demo-accounts"></div>
+    </section>
+
+    <section>
+      <p class="section-label">Step 2</p>
+      <h2>Sign in</h2>
+      <p class="login-warning">This is a demonstration. Pick a role above to fill in its demo account (password <span class="mono">demo1234</span>), and do not type your real college password.</p>
+      <form class="front-form" id="login-form">
+        <div class="field">
+          <label for="login-id">User ID</label>
+          <input id="login-id" type="text" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" autocomplete="off" required>
+        </div>
+        <button type="submit" class="btn">Sign in</button>
+      </form>
+      <p id="login-error" class="text-stop" role="alert"></p>
+    </section>
+
+    <section>
+      <p class="section-label">How one request travels</p>
+      <ol class="front-flow">
+        <li><strong>Request</strong>A student or alumnus raises it once.</li>
+        <li><strong>Clearance</strong>Every desk sees it at the same time.</li>
+        <li><strong>Record</strong>Attendance, dues and marks update themselves.</li>
+        <li><strong>Result</strong>The hall ticket or certificate is issued.</li>
+      </ol>
+      <p class="note"><a href="split.html">Open two roles side by side</a> to watch this happen.</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

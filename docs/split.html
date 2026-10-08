@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Side by side · College Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="split-page">
+  <header class="topbar">
+    <div class="brand">
+      <strong>College Management System · side by side</strong>
+      <span>PSNA College of Engineering &amp; Technology</span>
+    </div>
+    <a class="btn outline" href="index.html">Back to sign in</a>
+  </header>
+
+  <main class="split">
+    <section class="pane" data-start="staff" aria-label="Left view">
+      <div class="pane-tabs" role="tablist" aria-label="Role shown on the left"></div>
+      <iframe title="Dashboard on the left"></iframe>
+    </section>
+    <section class="pane" data-start="student" aria-label="Right view">
+      <div class="pane-tabs" role="tablist" aria-label="Role shown on the right"></div>
+      <iframe title="Dashboard on the right"></iframe>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

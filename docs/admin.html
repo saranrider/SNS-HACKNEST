@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin and Support · College Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-role="admin">
+  <header class="topbar">
+    <div class="brand">
+      <strong>College Management System</strong>
+      <span>PSNA College of Engineering &amp; Technology</span>
+    </div>
+    <div class="session" id="session"></div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidenav" aria-label="Admin modules">
+      <h2>Admin and support</h2>
+      <a href="#nodues">No dues clearance</a>
+      <a href="#fees">Fee follow-up</a>
+      <a href="#certificates">Certificate issue</a>
+      <a href="#salary">Salary calculation</a>
+      <a href="#support">Support desk</a>
+    </nav>
+
+    <main class="content">
+      <div class="page-head">
+        <h1>Admin and support</h1>
+        <p>College office · Sample data</p>
+      </div>
+
+      <section class="card overview" aria-label="Overview">
+        <p class="overview-line" id="overview-line"></p>
+        <div class="trackers" id="trackers"></div>
+      </section>
+
+      <section class="card" id="nodues">
+        <h2>No dues clearance · where requests are waiting</h2>
+        <p class="sub">Each desk clears in parallel. A desk clears automatically when the dues record shows nothing owed.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Desk</th><th>Auto-cleared</th><th>Open now</th><th>Average wait in days</th></tr>
+            </thead>
+            <tbody id="desk-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="grid-2">
+        <section class="card" id="fees">
+          <div class="card-head">
+            <h2>Fee follow-up</h2>
+            <button type="button" class="btn">Send reminders</button>
+          </div>
+          <div class="row wrap"><span>Devi · II MCA</span><span class="fee-action" id="fee-devi"></span></div>
+          <div class="row wrap"><span>Priya D · I MCA</span><strong class="text-wait">Second instalment due 20 Oct</strong></div>
+          <div class="row wrap"><span>Vignesh A · II MCA</span><strong class="text-wait">Hostel fee due 31 Oct</strong></div>
+          <p class="note muted">A payment updates the dues record, and the accounts desk clears by itself.</p>
+        </section>
+
+        <section class="card" id="certificates">
+          <h2>Certificate issue</h2>
+          <p class="sub">Student and alumni requests share one queue. Issued certificates carry a QR code for verification.</p>
+          <div class="row wrap"><span>Bonafide · Divya S</span><span class="pill ok">Issued with QR</span></div>
+          <div class="row wrap"><span>Transcript · Lakshmi V · alumna</span><span class="pill wait">With COE for verification</span></div>
+          <div class="row wrap"><span>Course completion · Suresh N</span><span class="pill wait">With COE for verification</span></div>
+          <div class="row wrap"><span>Consolidated marksheet · Anitha J</span><button type="button" class="btn">Issue now</button></div>
+        </section>
+      </div>
+
+      <section class="card" id="salary">
+        <h2>Salary calculation · inputs for October</h2>
+        <p class="sub">Working days come from staff in/out. Extra duties come from accepted duty alterations. Amounts are computed from your pay rules.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Staff</th><th>Days present</th><th>Leave</th><th>Extra duties</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Saran</td><td class="mono">6 / 6</td><td class="mono">0</td><td class="mono">0</td><td><span class="pill ok">Ready</span></td></tr>
+              <tr><td>Mr. Ravi T</td><td class="mono">5 / 6</td><td class="mono">1</td><td class="mono">1</td><td><span class="pill ok">Ready</span></td></tr>
+              <tr><td>Ms. Shalini G</td><td class="mono">5 / 6</td><td class="mono">0</td><td class="mono">0</td><td><span class="pill stop">1 day has no out entry</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" id="support">
+        <h2>Support desk</h2>
+        <p class="sub">Student queries and staff campus issues arrive as tickets with one owner each.</p>
+        <div class="row wrap"><span>Lab 2 projector not working · raised by Saran</span><span class="pill wait">Owner: maintenance · 1 day</span></div>
+        <div class="row wrap"><span>Bus pass renewal question · raised by Priya D</span><span class="pill">Owner: transport · new</span></div>
+        <div class="row wrap"><span>Name spelling on ID card · raised by Naveen M</span><span class="pill wait">Owner: office · 2 days</span></div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="page-foot">
+    <button type="button" class="btn outline" id="reset-demo">Reset demo data</button>
+    <span class="muted">Actions taken on one role's page carry over to the other pages in this browser.</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

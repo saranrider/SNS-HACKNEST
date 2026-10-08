@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff · College Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-role="staff">
+  <header class="topbar">
+    <div class="brand">
+      <strong>College Management System</strong>
+      <span>PSNA College of Engineering &amp; Technology</span>
+    </div>
+    <div class="session" id="session"></div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidenav" aria-label="Staff modules">
+      <h2>Staff modules</h2>
+      <a href="#od">OD approvals</a>
+      <a href="#attendance">Mark attendance</a>
+      <a href="#syllabus">Syllabus</a>
+      <a href="#blueprint">Question cluster and blueprint</a>
+      <a href="#project">Project guidance</a>
+      <a href="#duty">Duty alteration</a>
+      <a href="#inout">Staff in/out</a>
+      <a href="#issues">Issues at campus</a>
+    </nav>
+
+    <main class="content">
+      <div class="page-head">
+        <h1>Staff dashboard</h1>
+        <p>Saran · Assistant Professor, Computer Applications · Class advisor, II MCA · Sample data</p>
+      </div>
+
+      <section class="card overview" aria-label="Overview">
+        <p class="overview-line" id="overview-line"></p>
+        <div class="trackers" id="trackers"></div>
+      </section>
+
+      <section class="card" id="od">
+        <h2>OD approvals</h2>
+        <p class="sub">Participation is already verified by the event organiser. Approving marks the missed periods as OD in the attendance record.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Student</th><th>Event</th><th>Periods</th><th>Attendance after</th><th>Action</th></tr>
+            </thead>
+            <tbody id="od-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="grid-2">
+        <section class="card" id="attendance">
+          <h2>Mark attendance · today</h2>
+          <div class="row"><span>Period 1 · II MCA · Database Systems</span><span class="pill ok">Marked</span></div>
+          <div class="row"><span>Period 3 · I MCA · Data Structures</span><span class="pill ok">Marked</span></div>
+          <div class="row"><span>Period 5 · II MCA · Database Systems lab</span><button type="button" class="btn outline">Mark now</button></div>
+          <div class="row"><span>Period 7 · I MCA · Data Structures</span><span class="muted">Starts 3:10 pm</span></div>
+        </section>
+
+        <section class="card" id="syllabus">
+          <h2>Syllabus</h2>
+          <p class="sub">Submitted to the Controller of Examinations. The approved version drives question papers and assignment deadlines.</p>
+          <div class="row"><span>Database Systems</span><span class="pill ok">Approved by COE</span></div>
+          <div class="row"><span>Data Structures</span><span class="pill wait">With COE for approval</span></div>
+          <div class="row"><span>Units completed · Database Systems</span><span class="mono">3 / 5</span></div>
+        </section>
+      </div>
+
+      <section class="card" id="blueprint">
+        <div class="card-head">
+          <div>
+            <h2>Question cluster and blueprint checker</h2>
+            <p class="sub">Database Systems · End semester draft · 100 marks · checked against the COE-approved blueprint of 20 marks per unit</p>
+          </div>
+          <button type="button" class="btn" disabled>Send to COE after fixing gaps</button>
+        </div>
+        <div class="grid-2">
+          <div>
+            <div class="section-label">Marks by unit</div>
+            <div id="unit-bars"></div>
+          </div>
+          <div>
+            <div class="section-label">What to fix</div>
+            <div class="notice stop">Unit IV has 12 marks. Add 8 marks from the question cluster.</div>
+            <div class="notice stop">Unit II has 28 marks. Move one 8-mark question out.</div>
+            <div class="notice">Every question is mapped to a course outcome.</div>
+            <div class="notice">Difficulty spread is within the blueprint limits.</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid-2">
+        <section class="card" id="project">
+          <h2>Project guidance</h2>
+          <div class="row"><span>Devi · wants to continue the 2024 face recognition attendance project<span class="detail">Matched on title and abstract · graphical abstract attached</span></span><button type="button" class="btn">Review</button></div>
+          <div class="row"><span>Batch 4 · Review 2 design document</span><span class="pill wait">Changes requested</span></div>
+          <div class="row"><span>Batch 7 · Review 2 design document</span><span class="pill">Waiting for your review</span></div>
+          <div class="row"><span>Batch 9 · Review 1</span><span class="pill ok">Accepted</span></div>
+        </section>
+
+        <section class="card" id="duty">
+          <h2>Duty alteration</h2>
+          <p class="sub">Only colleagues who are free and eligible are shown. Accepted changes reach salary calculation.</p>
+          <div class="row"><span>Invigilation · 14 Oct forenoon · you cannot attend</span><button type="button" class="btn outline">3 free staff</button></div>
+          <div class="row"><span>Class swap · 9 Oct period 2</span><span class="pill ok">Accepted by colleague</span></div>
+        </section>
+      </div>
+
+      <div class="grid-2">
+        <section class="card" id="inout">
+          <h2>Staff in/out · this month</h2>
+          <div class="row"><span>Today</span><span class="mono">In 8:52 am</span></div>
+          <div class="row"><span>Working days present</span><span class="mono">6 / 6</span></div>
+          <div class="row"><span>Leave taken</span><span class="mono">0</span></div>
+        </section>
+
+        <section class="card" id="issues">
+          <h2>Issues at campus</h2>
+          <div class="row"><span>Lab 2 projector not working</span><span class="pill wait">Open · support desk</span></div>
+          <form class="form">
+            <label for="issue-text">Report a new issue</label>
+            <input id="issue-text" type="text">
+            <button type="button" class="btn">Send to support desk</button>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <footer class="page-foot">
+    <button type="button" class="btn outline" id="reset-demo">Reset demo data</button>
+    <span class="muted">Actions taken on one role's page carry over to the other pages in this browser.</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Controller of Examinations · College Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-role="coe">
+  <header class="topbar">
+    <div class="brand">
+      <strong>College Management System</strong>
+      <span>PSNA College of Engineering &amp; Technology</span>
+    </div>
+    <div class="session" id="session"></div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidenav" aria-label="Examination modules">
+      <h2>Examination modules</h2>
+      <a href="#syllabus">Syllabus and blueprint</a>
+      <a href="#scrutiny">Question paper scrutiny</a>
+      <a href="#hallticket">Hall ticket issue</a>
+      <a href="#results">Exam conduct and results</a>
+      <a href="#certificates">Certificate approval</a>
+    </nav>
+
+    <main class="content">
+      <div class="page-head">
+        <h1>Controller of Examinations</h1>
+        <p>Brundha · The single link between syllabus, examinations and academic certificates · Sample data</p>
+      </div>
+
+      <section class="card overview" aria-label="Overview">
+        <p class="overview-line" id="overview-line"></p>
+        <div class="trackers" id="trackers"></div>
+      </section>
+
+      <div class="grid-2">
+        <section class="card" id="syllabus">
+          <h2>Syllabus and blueprint approval</h2>
+          <p class="sub">Staff submit the syllabus. The approved version sets unit weightage for every question paper.</p>
+          <div class="row"><span>Data Structures · Saran</span><button type="button" class="btn">Review</button></div>
+          <div class="row"><span>Software Engineering · Mr. Ravi T</span><button type="button" class="btn">Review</button></div>
+          <div class="row"><span>Database Systems · Saran</span><span class="pill ok">Approved · 20 marks per unit</span></div>
+        </section>
+
+        <section class="card" id="scrutiny">
+          <h2>Question paper scrutiny</h2>
+          <p class="sub">Papers arrive with the blueprint check already attached.</p>
+          <div class="row"><span>Operating Systems</span><span class="pill ok">Blueprint passed · approve</span></div>
+          <div class="row"><span>Digital Marketing</span><span class="pill ok">Blueprint passed · approve</span></div>
+          <div class="row"><span>Database Systems</span><span class="pill stop">2 unit gaps · with staff</span></div>
+        </section>
+      </div>
+
+      <section class="card" id="hallticket">
+        <div class="card-head">
+          <div>
+            <h2>Hall ticket issue</h2>
+            <p class="sub">Eligibility is read from the attendance record and the no dues clearance. Nothing is typed in again.</p>
+          </div>
+          <button type="button" class="btn">Issue to all eligible</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Student</th><th>Attendance</th><th>No dues</th><th>Hall ticket</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Arun P</td><td class="mono">80.6%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
+              <tr><td>Divya S</td><td class="mono">76.5%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
+              <tr><td>Farida B</td><td class="mono">88.3%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
+              <tr><td>Devi</td><td id="coe-attendance" class="mono">-</td><td id="coe-dues">-</td><td><span class="pill" id="coe-status"></span></td></tr>
+              <tr><td>Naveen M</td><td class="mono">79.1%</td><td class="text-wait">3 of 4 desks</td><td><span class="pill wait">On hold · library book due</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="grid-2">
+        <section class="card" id="results">
+          <h2>Exam conduct and results</h2>
+          <p class="sub">Published results update the student record and supply attainment data for NBA.</p>
+          <div class="row"><span>Internal assessment 1</span><span class="pill ok">Published</span></div>
+          <div class="row"><span>Internal assessment 2</span><span class="pill">Starts 26 Oct</span></div>
+          <div class="row"><span>End semester examination</span><span class="pill wait">2 of 5 papers approved</span></div>
+        </section>
+
+        <section class="card" id="certificates">
+          <h2>Academic certificate approval</h2>
+          <p class="sub">The admin desk issues a certificate only after marks are verified here.</p>
+          <div class="row"><span>Transcript · Lakshmi V · alumna, 2022 batch</span><button type="button" class="btn">Verify marks</button></div>
+          <div class="row"><span>Course completion · Suresh N · 2025 batch</span><button type="button" class="btn">Verify marks</button></div>
+          <div class="row"><span>Consolidated marksheet · Anitha J</span><span class="pill ok">Verified · back with admin</span></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <footer class="page-foot">
+    <button type="button" class="btn outline" id="reset-demo">Reset demo data</button>
+    <span class="muted">Actions taken on one role's page carry over to the other pages in this browser.</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
