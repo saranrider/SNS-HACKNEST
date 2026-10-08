@@ -33,28 +33,10 @@
         <p>College office · Sample data</p>
       </div>
 
-      <div class="stats">
-        <div class="stat">
-          <div class="label">No dues requests open</div>
-          <div class="value" id="nodues-open">-</div>
-          <div class="hint stop" id="slowest-desk"></div>
-        </div>
-        <div class="stat">
-          <div class="label">Students with fee balance</div>
-          <div class="value" id="fee-balance-count">-</div>
-          <div class="hint wait">Exam fee closes 15 Oct</div>
-        </div>
-        <div class="stat">
-          <div class="label">Certificates in progress</div>
-          <div class="value">3</div>
-          <div class="hint">2 waiting for COE</div>
-        </div>
-        <div class="stat">
-          <div class="label">Support tickets open</div>
-          <div class="value">3</div>
-          <div class="hint">From students and staff</div>
-        </div>
-      </div>
+      <section class="card overview" aria-label="Overview">
+        <p class="overview-line" id="overview-line"></p>
+        <div class="trackers" id="trackers"></div>
+      </section>
 
       <section class="card" id="nodues">
         <h2>No dues clearance · where requests are waiting</h2>

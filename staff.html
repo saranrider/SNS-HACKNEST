@@ -36,28 +36,10 @@
         <p>Saran · Assistant Professor, Computer Applications · Class advisor, II MCA · Sample data</p>
       </div>
 
-      <div class="stats">
-        <div class="stat">
-          <div class="label">OD requests waiting</div>
-          <div class="value" id="od-pending">-</div>
-          <div class="hint">Approve in one tap below</div>
-        </div>
-        <div class="stat">
-          <div class="label">Classes today</div>
-          <div class="value">4</div>
-          <div class="hint wait">1 attendance entry pending</div>
-        </div>
-        <div class="stat">
-          <div class="label">Question paper</div>
-          <div class="value words">2 gaps found</div>
-          <div class="hint stop">Fix before sending to COE</div>
-        </div>
-        <div class="stat">
-          <div class="label">Campus issues you raised</div>
-          <div class="value">2</div>
-          <div class="hint">1 open · 1 resolved</div>
-        </div>
-      </div>
+      <section class="card overview" aria-label="Overview">
+        <p class="overview-line" id="overview-line"></p>
+        <div class="trackers" id="trackers"></div>
+      </section>
 
       <section class="card" id="od">
         <h2>OD approvals</h2>

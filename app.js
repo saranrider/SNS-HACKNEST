@@ -3,7 +3,6 @@
 
 const MIN_ATTENDANCE = 0.75;
 const DESK_COUNT = 4;
-const HALL_TICKET_CLASS_SIZE = 5;
 
 // The student whose record is followed across the five role pages.
 const DEMO_STUDENT = "Devi";
@@ -306,6 +305,7 @@ function renderAttendanceMeter(record) {
   const current = meterPosition(record.attended, record.held);
   fill.style.width = current + "%";
   fill.classList.toggle("low", !record.attendanceOk);
+  fill.parentElement.classList.toggle("low", !record.attendanceOk);
 
   // The striped part shows what a pending OD request would add.
   ghost.hidden = record.odApproved;
@@ -492,8 +492,6 @@ function renderOdApprovals() {
   if (!body) return;
 
   const state = loadState();
-  let pending = odRequests.filter((request) => !state.odApproved.includes(request.student)).length;
-  setText("od-pending", pending);
 
   odRequests.forEach((request) => {
     const before = percent(request.attended, request.held);
@@ -519,8 +517,7 @@ function renderOdApprovals() {
         state.odApproved.push(request.student);
         saveState(state);
         showApproved();
-        pending -= 1;
-        setText("od-pending", pending);
+        renderOverview();
       });
       action.append(button);
     }
@@ -571,7 +568,6 @@ function renderDesks() {
   );
 
   const slowest = list.reduce((a, b) => (b.waitDays > a.waitDays ? b : a));
-  const totalOpen = list.reduce((sum, desk) => sum + desk.open, 0);
 
   list.forEach((desk) => {
     const row = el("tr");
@@ -590,14 +586,9 @@ function renderDesks() {
     row.append(cell);
     body.append(row);
   });
-
-  setText("nodues-open", totalOpen);
-  setText("slowest-desk", "Slowest desk: " + slowest.name);
 }
 
 /* ---------- admin: fee follow-up ---------- */
-
-const STUDENTS_WITH_BALANCE = 3;
 
 function renderFees() {
   const slot = document.getElementById("fee-devi");
@@ -606,7 +597,6 @@ function renderFees() {
   const state = loadState();
   const showPaid = () => {
     slot.replaceChildren(el("span", "pill ok", "Paid · accounts desk cleared"));
-    setText("fee-balance-count", STUDENTS_WITH_BALANCE - 1);
   };
 
   if (state.feePaid) {
@@ -614,7 +604,6 @@ function renderFees() {
     return;
   }
 
-  setText("fee-balance-count", STUDENTS_WITH_BALANCE);
   const button = el("button", "btn outline", "Record payment");
   button.type = "button";
   button.addEventListener("click", () => {
@@ -622,6 +611,7 @@ function renderFees() {
     saveState(state);
     showPaid();
     renderDesks();
+    renderOverview();
   });
   slot.append(el("strong", "text-stop", "Exam fee due · blocks hall ticket"), button);
 }
@@ -642,11 +632,6 @@ function renderHallTickets() {
   setStatus("coe-attendance", "mono", record.attendanceOk ? "" : "text-stop", percent(record.attended, record.held));
   setStatus("coe-dues", "", duesDone ? "" : "text-wait", record.desksCleared + " of " + DESK_COUNT + " desks");
   setStatus("coe-status", "pill", onHold ? "stop" : "ok", onHold ? "On hold · " + reasons.join(", ") : "Ready to issue");
-
-  // three classmates already hold tickets, one is held for a library book
-  const ready = 3 + (onHold ? 0 : 1);
-  setText("ht-issued", ready + " / " + HALL_TICKET_CLASS_SIZE);
-  setText("ht-issued-hint", HALL_TICKET_CLASS_SIZE - ready + " on hold");
 }
 
 /* ---------- sign in and page access ---------- */
@@ -787,6 +772,180 @@ function setUpSplitView() {
   });
 }
 
+/* ---------- overview panel (staff, COE, admin) ---------- */
+
+// Each list below is one tracker: one entry per item, with its state.
+// "done" is finished, "todo" is still to come, "bad" needs someone to act.
+const todayClasses = [
+  { label: "Period 1 · II MCA · Database Systems · marked", state: "done" },
+  { label: "Period 3 · I MCA · Data Structures · marked", state: "done" },
+  { label: "Period 5 · II MCA · Database Systems lab · not marked", state: "bad" },
+  { label: "Period 7 · I MCA · Data Structures · starts 3:10 pm", state: "todo" },
+];
+
+const campusIssues = [
+  { label: "Lab 1 network port · resolved", state: "done" },
+  { label: "Lab 2 projector not working · open", state: "todo" },
+];
+
+const examPipeline = {
+  syllabi: [
+    { label: "Database Systems · approved", state: "done" },
+    { label: "Data Structures · to review", state: "todo" },
+    { label: "Software Engineering · to review", state: "todo" },
+  ],
+  papers: [
+    { label: "Operating Systems · blueprint passed", state: "done" },
+    { label: "Digital Marketing · blueprint passed", state: "done" },
+    { label: "Database Systems · returned to staff", state: "bad" },
+  ],
+  results: [
+    { label: "Internal assessment 1 · published", state: "done" },
+    { label: "Internal assessment 2 · starts 26 Oct", state: "todo" },
+    { label: "End semester · papers being approved", state: "todo" },
+  ],
+  certificates: [
+    { label: "Consolidated marksheet · Anitha J · verified", state: "done" },
+    { label: "Transcript · Lakshmi V · to verify", state: "todo" },
+    { label: "Course completion · Suresh N · to verify", state: "todo" },
+  ],
+};
+
+const officeQueues = {
+  certificates: [
+    { label: "Bonafide · Divya S · issued", state: "done" },
+    { label: "Transcript · Lakshmi V · with COE", state: "todo" },
+    { label: "Course completion · Suresh N · with COE", state: "todo" },
+    { label: "Consolidated marksheet · Anitha J · ready to issue", state: "todo" },
+  ],
+  tickets: [
+    { label: "Lab 2 projector · maintenance · 1 day", state: "todo" },
+    { label: "Bus pass renewal · transport · new", state: "todo" },
+    { label: "Name spelling on ID card · office · 2 days", state: "todo" },
+  ],
+};
+
+function countState(items, state) {
+  return items.filter((item) => item.state === state).length;
+}
+
+// A title, a count, one segment per item and a line of explanation.
+// The explanation always says in words what the colours show.
+function tracker(title, items, hint, hintKind, value) {
+  const done = countState(items, "done");
+  const summary = value || done + " of " + items.length;
+
+  const box = el("div", "tracker");
+  const head = el("div", "tracker-head");
+  head.append(el("span", "tracker-title", title), el("span", "tracker-value", summary));
+
+  const bar = el("div", "segments");
+  bar.setAttribute("role", "img");
+  bar.setAttribute("aria-label", title + ": " + summary);
+  items.forEach((item) => {
+    const segment = el("span", "segment " + item.state);
+    segment.dataset.label = item.label; // shown on hover
+    bar.append(segment);
+  });
+
+  box.append(head, bar, el("div", ("hint " + (hintKind || "")).trim(), hint));
+  return box;
+}
+
+function staffOverview(state) {
+  const requests = odRequests.map((request) => ({
+    label: request.student + " · " + request.event,
+    state: state.odApproved.includes(request.student) ? "done" : "todo",
+  }));
+  const waiting = countState(requests, "todo");
+
+  const units = blueprint.units.map((unit) => ({
+    label: unit.name + " · " + unit.marks + " of " + blueprint.marksPerUnit + " marks",
+    state: unit.marks === blueprint.marksPerUnit ? "done" : "bad",
+  }));
+  const unitsOff = countState(units, "bad");
+
+  let line = "Every OD request is approved.";
+  if (waiting === 1) line = "1 OD request is waiting for your approval.";
+  if (waiting > 1) line = waiting + " OD requests are waiting for your approval.";
+
+  return {
+    line,
+    trackers: [
+      tracker("OD requests approved", requests, waiting ? "Approve in the table below" : "Nothing waiting", waiting ? "wait" : ""),
+      tracker("Classes marked today", todayClasses, "Period 5 is not marked yet", "stop"),
+      tracker("Units on blueprint", units, unitsOff + " units need fixing before COE", "stop"),
+      tracker("Campus issues resolved", campusIssues, "1 open with the support desk", ""),
+    ],
+  };
+}
+
+function coeOverview(state) {
+  const record = studentRecord(state);
+  const demoReady = record.attendanceOk && record.desksCleared === DESK_COUNT;
+
+  const hallTickets = [
+    { label: "Arun P · issued", state: "done" },
+    { label: "Divya S · issued", state: "done" },
+    { label: "Farida B · issued", state: "done" },
+    { label: DEMO_STUDENT + (demoReady ? " · ready to issue" : " · on hold"), state: demoReady ? "done" : "bad" },
+    { label: "Naveen M · on hold, library book due", state: "bad" },
+  ];
+  const held = countState(hallTickets, "bad");
+
+  return {
+    line: held + (held === 1 ? " hall ticket is" : " hall tickets are") + " on hold, and 2 syllabi are waiting for approval.",
+    trackers: [
+      tracker("Syllabi approved", examPipeline.syllabi, "2 to review", "wait"),
+      tracker("Papers through scrutiny", examPipeline.papers, "1 returned to staff", "stop"),
+      tracker("Hall tickets ready", hallTickets, held + " on hold", "stop"),
+      tracker("Results published", examPipeline.results, "Next: internal assessment 2", ""),
+      tracker("Certificates verified", examPipeline.certificates, "2 sent by the admin desk", "wait"),
+    ],
+  };
+}
+
+function adminOverview(state) {
+  const fees = [
+    { label: DEMO_STUDENT + (state.feePaid ? " · paid" : " · exam fee due"), state: state.feePaid ? "done" : "bad" },
+    { label: "Priya D · second instalment due 20 Oct", state: "todo" },
+    { label: "Vignesh A · hostel fee due 31 Oct", state: "todo" },
+  ];
+
+  const mostOpen = desks.reduce((a, b) => (b.open > a.open ? b : a));
+  let totalOpen = 0;
+  const deskItems = desks.map((desk) => {
+    const open = desk.name === "Accounts" && state.feePaid ? desk.open - 1 : desk.open;
+    totalOpen += open;
+    let deskState = open === 0 ? "done" : "todo";
+    if (desk === mostOpen) deskState = "bad";
+    return { label: desk.name + " · " + open + " open", state: deskState };
+  });
+
+  return {
+    line: totalOpen + " no dues requests are open, most of them at the " + mostOpen.name.toLowerCase() + " desk.",
+    trackers: [
+      tracker("Fee balances cleared", fees, state.feePaid ? "2 students still owe" : "Exam fee closes 15 Oct", state.feePaid ? "" : "stop"),
+      tracker("No dues by desk", deskItems, mostOpen.name + " desk has the longest queue", "stop", totalOpen + " open"),
+      tracker("Certificates issued", officeQueues.certificates, "2 waiting for COE", "wait"),
+      tracker("Support tickets closed", officeQueues.tickets, "3 open, each with an owner", ""),
+    ],
+  };
+}
+
+function renderOverview() {
+  const holder = document.getElementById("trackers");
+  if (!holder) return;
+
+  const builders = { staff: staffOverview, coe: coeOverview, admin: adminOverview };
+  const build = builders[document.body.dataset.role];
+  if (!build) return;
+
+  const view = build(loadState());
+  setText("overview-line", view.line);
+  holder.replaceChildren(...view.trackers);
+}
+
 function setUpReset() {
   const button = document.getElementById("reset-demo");
   if (!button) return;
@@ -806,6 +965,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setUpLogin();
   setUpSplitView();
   setUpReset();
+  renderOverview();
   renderFees();
   renderHallTickets();
   renderAttendance();
