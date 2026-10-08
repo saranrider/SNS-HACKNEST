@@ -1,6 +1,6 @@
 # College Management System: UI prototype (PS06)
 
-A student hackathon prototype built for PSNA College of Engineering & Technology. It is not an official college system.
+A Prototype built for PSNA College of Engineering & Technology.
 
 Static, clickable screens for the five roles in our workflow diagram. Open `index.html` in a browser; there is no build step and no server.
 
