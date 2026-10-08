@@ -37,6 +37,12 @@ Each dashboard opens only for its own role; anyone else is sent back to the sign
 
 `split.html` shows two dashboards next to each other, each with tabs to pick the role. An action in one pane refreshes the other, so approving an OD request as Staff on the left changes the Student page on the right straight away. It opens without signing in, as a presenter view for the demo; it is linked from the sign-in page.
 
+## Follow-up links
+
+Elements that hand work to another role are clickable (they get an outline on hover). Clicking one opens the side-by-side view with the current page on the left and, on the right, the page and section where the next step happens. For example, the hall ticket on the Student page opens the COE's hall ticket list, and "Verify marks" on the COE page opens the Admin certificate queue. After Staff approves an OD request or Admin records a fee, a "See it on the Student page" link appears.
+
+In the HTML these are marked with `data-followup="role#section"`; `openFollowUp` in `app.js` does the rest.
+
 ## The pages are connected
 
 Actions are saved in the browser (`localStorage`) and read by every page, so one student's case can be followed across roles:

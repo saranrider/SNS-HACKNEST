@@ -64,13 +64,13 @@
               <li class="cleared">Library</li>
               <li class="cleared">Laboratory</li>
               <li class="cleared">Hostel</li>
-              <li id="desk-accounts">Accounts</li>
+              <li id="desk-accounts" data-followup="admin#fees">Accounts</li>
             </ol>
             <div class="hint" id="dues-hint"></div>
           </div>
         </div>
 
-        <div class="ticket" id="ticket">
+        <div class="ticket" id="ticket" data-followup="coe#hallticket">
           <span class="ticket-label">Hall ticket</span>
           <strong class="ticket-status" id="ht-status">-</strong>
           <span class="hint" id="ht-hint"></span>
@@ -97,12 +97,12 @@
             <h2>OD request tracker</h2>
             <p class="sub">Internal hackathon, 6 Oct 2026 · 6 periods missed · participant list verified by the organiser</p>
           </div>
-          <button type="button" class="btn">New OD request</button>
+          <button type="button" class="btn" data-followup="staff#od">New OD request</button>
         </div>
         <ol class="steps">
           <li class="done"><small>Step 1 · Done</small><strong>Submitted</strong></li>
           <li class="done"><small>Step 2 · Done</small><strong>Organiser verified</strong></li>
-          <li id="step-approval"><small id="step-approval-label">Step 3</small><strong>Staff approval</strong></li>
+          <li id="step-approval" data-followup="staff#od"><small id="step-approval-label">Step 3</small><strong>Staff approval</strong></li>
           <li id="step-updated"><small id="step-updated-label">Step 4</small><strong>Attendance updated</strong></li>
         </ol>
         <p class="note" id="od-note"></p>
@@ -115,14 +115,14 @@
           <div class="row"><span>Library</span><span class="pill ok">Cleared automatically</span></div>
           <div class="row"><span>Laboratory</span><span class="pill ok">Cleared automatically</span></div>
           <div class="row"><span>Hostel</span><span class="pill ok">Cleared by warden</span></div>
-          <div class="row"><span>Accounts</span><span class="pill" id="accounts-pill"></span></div>
+          <div class="row"><span>Accounts</span><span class="pill" id="accounts-pill" data-followup="admin#fees"></span></div>
         </section>
 
         <section class="card" id="hallticket">
           <h2>Hall ticket and performance</h2>
           <p class="sub">Issued by the Controller of Examinations when both conditions are met.</p>
-          <div class="row"><span>Attendance eligibility</span><span class="pill" id="ht-attendance"></span></div>
-          <div class="row"><span>No dues</span><span class="pill" id="ht-dues"></span></div>
+          <div class="row"><span>Attendance eligibility</span><span class="pill" id="ht-attendance" data-followup="coe#hallticket"></span></div>
+          <div class="row"><span>No dues</span><span class="pill" id="ht-dues" data-followup="coe#hallticket"></span></div>
           <div class="row"><span>Internal assessment 1</span><span class="mono">41 / 50</span></div>
           <div class="row"><span>Last semester GPA</span><span class="mono">8.12</span></div>
         </section>
@@ -172,7 +172,7 @@
           <h2>Project reviews</h2>
           <div class="row"><span>Review 1 · Problem and literature</span><span class="pill ok">Accepted</span></div>
           <div class="row"><span>Review 2 · Design</span><span class="pill wait">Guide asked for changes</span></div>
-          <div class="row"><span>Alumni mentor</span><span class="pill">Matched</span></div>
+          <div class="row"><span>Alumni mentor</span><span class="pill" data-followup="alumni#placement">Matched</span></div>
         </section>
 
         <section class="card" id="query">
@@ -187,7 +187,7 @@
             </select>
             <label for="query-text">Your question</label>
             <textarea id="query-text" rows="3"></textarea>
-            <button type="button" class="btn">Send query</button>
+            <button type="button" class="btn" data-followup="admin#support">Send query</button>
           </form>
         </section>
       </div>

@@ -1137,3 +1137,34 @@ td {
   border-radius: 50%;
   background: var(--white);
 }
+
+/* ---------- follow-up links ---------- */
+
+[data-followup] {
+  cursor: pointer;
+}
+
+[data-followup]:hover,
+[data-followup]:focus-visible {
+  outline: 2px solid var(--blue-600);
+  outline-offset: 2px;
+}
+
+.pill[data-followup]::after {
+  content: " \203A";
+}
+
+.link-button {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--blue-700);
+  font: inherit;
+  text-decoration: underline;
+}
+
+/* a section opened from a follow-up should not sit under the page edge */
+.content section {
+  scroll-margin-top: 16px;
+}

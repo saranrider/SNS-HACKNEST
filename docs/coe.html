@@ -42,8 +42,8 @@
         <section class="card" id="syllabus">
           <h2>Syllabus and blueprint approval</h2>
           <p class="sub">Staff submit the syllabus. The approved version sets unit weightage for every question paper.</p>
-          <div class="row"><span>Data Structures · Saran</span><button type="button" class="btn">Review</button></div>
-          <div class="row"><span>Software Engineering · Mr. Ravi T</span><button type="button" class="btn">Review</button></div>
+          <div class="row"><span>Data Structures · Saran</span><button type="button" class="btn" data-followup="staff#syllabus">Review</button></div>
+          <div class="row"><span>Software Engineering · Mr. Ravi T</span><button type="button" class="btn" data-followup="staff#syllabus">Review</button></div>
           <div class="row"><span>Database Systems · Saran</span><span class="pill ok">Approved · 20 marks per unit</span></div>
         </section>
 
@@ -52,7 +52,7 @@
           <p class="sub">Papers arrive with the blueprint check already attached.</p>
           <div class="row"><span>Operating Systems</span><span class="pill ok">Blueprint passed · approve</span></div>
           <div class="row"><span>Digital Marketing</span><span class="pill ok">Blueprint passed · approve</span></div>
-          <div class="row"><span>Database Systems</span><span class="pill stop">2 unit gaps · with staff</span></div>
+          <div class="row"><span>Database Systems</span><span class="pill stop" data-followup="staff#blueprint">2 unit gaps · with staff</span></div>
         </section>
       </div>
 
@@ -62,7 +62,7 @@
             <h2>Hall ticket issue</h2>
             <p class="sub">Eligibility is read from the attendance record and the no dues clearance. Nothing is typed in again.</p>
           </div>
-          <button type="button" class="btn">Issue to all eligible</button>
+          <button type="button" class="btn" data-followup="student#hallticket">Issue to all eligible</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -73,7 +73,7 @@
               <tr><td>Arun P</td><td class="mono">80.6%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
               <tr><td>Divya S</td><td class="mono">76.5%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
               <tr><td>Farida B</td><td class="mono">88.3%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
-              <tr><td>Devi</td><td id="coe-attendance" class="mono">-</td><td id="coe-dues">-</td><td><span class="pill" id="coe-status"></span></td></tr>
+              <tr><td>Devi</td><td id="coe-attendance" class="mono">-</td><td id="coe-dues">-</td><td><span class="pill" id="coe-status" data-followup="student#od"></span></td></tr>
               <tr><td>Naveen M</td><td class="mono">79.1%</td><td class="text-wait">3 of 4 desks</td><td><span class="pill wait">On hold · library book due</span></td></tr>
             </tbody>
           </table>
@@ -92,9 +92,9 @@
         <section class="card" id="certificates">
           <h2>Academic certificate approval</h2>
           <p class="sub">The admin desk issues a certificate only after marks are verified here.</p>
-          <div class="row"><span>Transcript · Lakshmi V · alumna, 2022 batch</span><button type="button" class="btn">Verify marks</button></div>
-          <div class="row"><span>Course completion · Suresh N · 2025 batch</span><button type="button" class="btn">Verify marks</button></div>
-          <div class="row"><span>Consolidated marksheet · Anitha J</span><span class="pill ok">Verified · back with admin</span></div>
+          <div class="row"><span>Transcript · Lakshmi V · alumna, 2022 batch</span><button type="button" class="btn" data-followup="admin#certificates">Verify marks</button></div>
+          <div class="row"><span>Course completion · Suresh N · 2025 batch</span><button type="button" class="btn" data-followup="admin#certificates">Verify marks</button></div>
+          <div class="row"><span>Consolidated marksheet · Anitha J</span><span class="pill ok" data-followup="admin#certificates">Verified · back with admin</span></div>
         </section>
       </div>
     </main>
