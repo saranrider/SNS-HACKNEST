@@ -55,6 +55,10 @@ cd server
 npm test
 ```
 
+## Putting it online
+
+`render.yaml` describes the server for Render (render.com): choose New, then Blueprint, pick this repository, and Render builds and starts it. The one address then serves both the pages and the API. On the free plan the disk is not kept, so the records go back to the starting data whenever the service restarts.
+
 ## Hosting the server elsewhere
 
 If the pages are on GitHub Pages and the server is on another address, set that address in `docs/config.js`, and start the server with `ALLOWED_ORIGIN` set to the pages' address (for example `https://saranrider.github.io`).

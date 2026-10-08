@@ -1,0 +1,14 @@
+# Deploys the backend (which also serves the pages in docs/) on Render.
+# In Render: New > Blueprint, pick this repository, and it reads this file.
+services:
+  - type: web
+    name: psna-hacknext
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
