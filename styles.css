@@ -886,3 +886,90 @@ td {
   font-size: 13px;
   color: var(--muted);
 }
+
+/* ---------- side-by-side view ---------- */
+
+.topbar a.btn {
+  display: inline-flex;
+  align-items: center;
+  border-color: var(--white);
+  text-decoration: none;
+}
+
+.split-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.split {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 12px;
+  min-height: 0;
+  padding: 12px;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--blue-100);
+  overflow: hidden;
+}
+
+/* the role tabs sit on a strip like the tabs of a browser window */
+.pane-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 8px 0;
+  overflow-x: auto;
+}
+
+.pane-tabs button {
+  flex: 1 0 auto;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: var(--blue-900);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.pane-tabs button:hover {
+  background: var(--blue-50);
+}
+
+.pane-tabs button.active {
+  border-color: var(--line);
+  background: var(--white);
+  font-weight: 600;
+}
+
+.pane iframe {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: var(--white);
+}
+
+/* a dashboard inside a pane has less room, so the side menu is dropped */
+.embedded .sidenav,
+.embedded .topbar {
+  display: none;
+}
+
+.embedded .layout {
+  padding: 16px;
+}
+
+.embedded .page-foot {
+  padding: 0 16px 24px;
+}
