@@ -66,8 +66,8 @@
         <section class="card" id="syllabus">
           <h2>Syllabus</h2>
           <p class="sub">Submitted to the Controller of Examinations. The approved version drives question papers and assignment deadlines.</p>
-          <div class="row"><span>Database Systems</span><span class="pill ok">Approved by COE</span></div>
-          <div class="row"><span>Data Structures</span><span class="pill wait">With COE for approval</span></div>
+          <div class="row"><span>Database Systems</span><span class="pill ok" data-followup="coe#syllabus">Approved by COE</span></div>
+          <div class="row"><span>Data Structures</span><span class="pill wait" data-followup="coe#syllabus">With COE for approval</span></div>
           <div class="row"><span>Units completed · Database Systems</span><span class="mono">3 / 5</span></div>
         </section>
       </div>
@@ -98,7 +98,7 @@
       <div class="grid-2">
         <section class="card" id="project">
           <h2>Project guidance</h2>
-          <div class="row"><span>Devi · wants to continue the 2024 face recognition attendance project<span class="detail">Matched on title and abstract · graphical abstract attached</span></span><button type="button" class="btn">Review</button></div>
+          <div class="row"><span>Devi · wants to continue the 2024 face recognition attendance project<span class="detail">Matched on title and abstract · graphical abstract attached</span></span><button type="button" class="btn" data-followup="student#project">Review</button></div>
           <div class="row"><span>Batch 4 · Review 2 design document</span><span class="pill wait">Changes requested</span></div>
           <div class="row"><span>Batch 7 · Review 2 design document</span><span class="pill">Waiting for your review</span></div>
           <div class="row"><span>Batch 9 · Review 1</span><span class="pill ok">Accepted</span></div>
@@ -107,7 +107,7 @@
         <section class="card" id="duty">
           <h2>Duty alteration</h2>
           <p class="sub">Only colleagues who are free and eligible are shown. Accepted changes reach salary calculation.</p>
-          <div class="row"><span>Invigilation · 14 Oct forenoon · you cannot attend</span><button type="button" class="btn outline">3 free staff</button></div>
+          <div class="row"><span>Invigilation · 14 Oct forenoon · you cannot attend</span><button type="button" class="btn outline" data-followup="admin#salary">3 free staff</button></div>
           <div class="row"><span>Class swap · 9 Oct period 2</span><span class="pill ok">Accepted by colleague</span></div>
         </section>
       </div>
@@ -122,11 +122,11 @@
 
         <section class="card" id="issues">
           <h2>Issues at campus</h2>
-          <div class="row"><span>Lab 2 projector not working</span><span class="pill wait">Open · support desk</span></div>
+          <div class="row"><span>Lab 2 projector not working</span><span class="pill wait" data-followup="admin#support">Open · support desk</span></div>
           <form class="form">
             <label for="issue-text">Report a new issue</label>
             <input id="issue-text" type="text">
-            <button type="button" class="btn">Send to support desk</button>
+            <button type="button" class="btn" data-followup="admin#support">Send to support desk</button>
           </form>
         </section>
       </div>

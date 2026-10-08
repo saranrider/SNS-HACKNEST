@@ -506,6 +506,10 @@ function renderOdApprovals() {
     const action = el("td");
     const showApproved = () => {
       action.replaceChildren(el("span", "pill ok", "Approved · record updated"));
+      if (request.student === DEMO_STUDENT) {
+        action.append(followUpLink("student#od", "See it on the Student page"));
+        setUpFollowUps(action);
+      }
     };
 
     if (state.odApproved.includes(request.student)) {
@@ -596,7 +600,11 @@ function renderFees() {
 
   const state = loadState();
   const showPaid = () => {
-    slot.replaceChildren(el("span", "pill ok", "Paid · accounts desk cleared"));
+    slot.replaceChildren(
+      el("span", "pill ok", "Paid · accounts desk cleared"),
+      followUpLink("student#nodues", "See it on the Student page")
+    );
+    setUpFollowUps(slot);
   };
 
   if (state.feePaid) {
@@ -741,14 +749,16 @@ function setUpSplitView() {
   if (panes.length === 0) return;
 
   const frames = [];
+  const showers = [];
+  const params = new URLSearchParams(window.location.search);
 
   panes.forEach((pane) => {
     const tabs = pane.querySelector(".pane-tabs");
     const frame = pane.querySelector("iframe");
     frames.push(frame);
 
-    const show = (account) => {
-      frame.src = account.page + "?embed=split";
+    const show = (account, section) => {
+      frame.src = account.page + "?embed=split" + (section ? "#" + section : "");
       tabs.querySelectorAll("button").forEach((button) => {
         const active = button.dataset.role === account.role;
         button.classList.toggle("active", active);
@@ -765,10 +775,24 @@ function setUpSplitView() {
       tabs.append(button);
     });
 
-    show(accounts.find((account) => account.role === pane.dataset.start));
+    // split.html?left=student&right=staff&focus=od opens a follow-up directly
+    const side = panes[0] === pane ? "left" : "right";
+    const wanted = accounts.find((account) => account.role === params.get(side));
+    const start = wanted || accounts.find((account) => account.role === pane.dataset.start);
+    show(start, side === "right" ? params.get("focus") : "");
+    showers.push(show);
   });
 
   window.addEventListener("message", (event) => {
+    const from = frames.findIndex((frame) => frame.contentWindow === event.source);
+    if (from < 0) return;
+
+    // a follow-up clicked in one pane opens its page in the other pane
+    if (event.data && event.data.type === "cms-followup") {
+      const account = accounts.find((item) => item.role === event.data.role);
+      if (account) showers[from === 0 ? 1 : 0](account, event.data.section);
+      return;
+    }
     if (event.data !== "cms-state-changed") return;
     frames.forEach((frame) => {
       // only our own frames can trigger a refresh, and the sender is skipped
@@ -953,6 +977,50 @@ function renderOverview() {
   holder.replaceChildren(...view.trackers);
 }
 
+/* ---------- follow-up links ---------- */
+
+// An element marked data-followup="role#section" is clickable. It opens the
+// side-by-side view with this page on the left and, on the right, the page
+// and section where the next step of that item happens.
+function openFollowUp(target) {
+  const [role, section] = target.split("#");
+  if (isEmbedded()) {
+    window.parent.postMessage({ type: "cms-followup", role, section: section || "" }, "*");
+    return;
+  }
+  const here = document.body.dataset.role;
+  const focus = section ? "&focus=" + section : "";
+  window.location.href = "split.html?left=" + here + "&right=" + role + focus;
+}
+
+function setUpFollowUps(root) {
+  (root || document).querySelectorAll("[data-followup]").forEach((node) => {
+    if (node.dataset.followupReady) return;
+    node.dataset.followupReady = "yes";
+
+    const role = node.dataset.followup.split("#")[0];
+    const account = accounts.find((item) => item.role === role);
+    node.title = "Follow-up: opens the " + account.title + " page";
+    node.addEventListener("click", () => openFollowUp(node.dataset.followup));
+
+    // pills and steps are not buttons, so make them reachable by keyboard too
+    if (node.tagName !== "BUTTON") {
+      node.tabIndex = 0;
+      node.setAttribute("role", "link");
+      node.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") openFollowUp(node.dataset.followup);
+      });
+    }
+  });
+}
+
+function followUpLink(target, label) {
+  const button = el("button", "link-button", label);
+  button.type = "button";
+  button.dataset.followup = target;
+  return button;
+}
+
 function setUpReset() {
   const button = document.getElementById("reset-demo");
   if (!button) return;
@@ -973,6 +1041,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setUpSplitView();
   setUpReset();
   renderOverview();
+  setUpFollowUps();
   renderFees();
   renderHallTickets();
   renderAttendance();

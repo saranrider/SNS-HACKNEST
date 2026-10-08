@@ -40,12 +40,12 @@
             <h2>Certificate request tracker</h2>
             <p class="sub">Transcript · requested 5 Oct 2026 · no visit to campus needed</p>
           </div>
-          <button type="button" class="btn">New certificate request</button>
+          <button type="button" class="btn" data-followup="admin#certificates">New certificate request</button>
         </div>
         <ol class="steps">
           <li class="done"><small>Step 1 · Done</small><strong>Request raised</strong></li>
           <li class="done"><small>Step 2 · Automatic</small><strong>No dues confirmed</strong></li>
-          <li class="current"><small>Step 3 · 2 days waiting</small><strong>COE verifies marks</strong></li>
+          <li class="current" data-followup="coe#certificates"><small>Step 3 · 2 days waiting</small><strong>COE verifies marks</strong></li>
           <li><small>Step 4</small><strong>Admin desk issues</strong></li>
           <li><small>Step 5</small><strong>Download with QR</strong></li>
         </ol>
@@ -56,11 +56,11 @@
         <section class="card" id="placement">
           <h2>Placement support</h2>
           <p class="sub">Referrals and mentoring you offer go straight to current students.</p>
-          <div class="row"><span>Referral posted · Junior developer</span><span class="pill">7 students applied</span></div>
+          <div class="row"><span>Referral posted · Junior developer</span><span class="pill" data-followup="student#project-reviews">7 students applied</span></div>
           <div class="row"><span>Project mentoring · II MCA batch 4</span><span class="pill ok">Active</span></div>
           <div class="actions">
-            <button type="button" class="btn outline">Post a referral</button>
-            <button type="button" class="btn outline">Offer mentoring</button>
+            <button type="button" class="btn outline" data-followup="student#project-reviews">Post a referral</button>
+            <button type="button" class="btn outline" data-followup="student#project-reviews">Offer mentoring</button>
           </div>
         </section>
 

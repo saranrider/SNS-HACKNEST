@@ -55,7 +55,7 @@
         <section class="card" id="fees">
           <div class="card-head">
             <h2>Fee follow-up</h2>
-            <button type="button" class="btn">Send reminders</button>
+            <button type="button" class="btn" data-followup="student#nodues">Send reminders</button>
           </div>
           <div class="row wrap"><span>Devi · II MCA</span><span class="fee-action" id="fee-devi"></span></div>
           <div class="row wrap"><span>Priya D · I MCA</span><strong class="text-wait">Second instalment due 20 Oct</strong></div>
@@ -67,9 +67,9 @@
           <h2>Certificate issue</h2>
           <p class="sub">Student and alumni requests share one queue. Issued certificates carry a QR code for verification.</p>
           <div class="row wrap"><span>Bonafide · Divya S</span><span class="pill ok">Issued with QR</span></div>
-          <div class="row wrap"><span>Transcript · Lakshmi V · alumna</span><span class="pill wait">With COE for verification</span></div>
-          <div class="row wrap"><span>Course completion · Suresh N</span><span class="pill wait">With COE for verification</span></div>
-          <div class="row wrap"><span>Consolidated marksheet · Anitha J</span><button type="button" class="btn">Issue now</button></div>
+          <div class="row wrap"><span>Transcript · Lakshmi V · alumna</span><span class="pill wait" data-followup="coe#certificates">With COE for verification</span></div>
+          <div class="row wrap"><span>Course completion · Suresh N</span><span class="pill wait" data-followup="coe#certificates">With COE for verification</span></div>
+          <div class="row wrap"><span>Consolidated marksheet · Anitha J</span><button type="button" class="btn" data-followup="alumni#certificate">Issue now</button></div>
         </section>
       </div>
 
@@ -93,8 +93,8 @@
       <section class="card" id="support">
         <h2>Support desk</h2>
         <p class="sub">Student queries and staff campus issues arrive as tickets with one owner each.</p>
-        <div class="row wrap"><span>Lab 2 projector not working · raised by Saran</span><span class="pill wait">Owner: maintenance · 1 day</span></div>
-        <div class="row wrap"><span>Bus pass renewal question · raised by Priya D</span><span class="pill">Owner: transport · new</span></div>
+        <div class="row wrap"><span>Lab 2 projector not working · raised by Saran</span><span class="pill wait" data-followup="staff#issues">Owner: maintenance · 1 day</span></div>
+        <div class="row wrap"><span>Bus pass renewal question · raised by Priya D</span><span class="pill" data-followup="student#query">Owner: transport · new</span></div>
         <div class="row wrap"><span>Name spelling on ID card · raised by Naveen M</span><span class="pill wait">Owner: office · 2 days</span></div>
       </section>
     </main>
