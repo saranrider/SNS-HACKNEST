@@ -1168,3 +1168,13 @@ td {
 .content section {
   scroll-margin-top: 16px;
 }
+
+/* ---------- server connection note in the footer ---------- */
+
+.backend-status {
+  color: var(--muted);
+}
+
+.backend-status.online {
+  color: var(--ok-fg);
+}

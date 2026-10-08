@@ -42,6 +42,135 @@ function signOut() {
   window.location.href = "index.html";
 }
 
+/* ---------- backend connection ---------- */
+
+// When the pages are served by the server in /server, sign-in and the
+// cross-role actions go through its API and every device sees the same
+// records. Opened as plain files, or from a host with no server, the pages
+// fall back to keeping everything in this browser.
+const API_BASE = window.CMS_API_BASE || "";
+const EMBED_TOKEN_KEY = "cms-embed-token-";
+const POLL_MS = 3000;
+let backendOnline = false;
+let actionsInFlight = 0;
+
+async function connectBackend() {
+  if (window.location.protocol === "file:" && !API_BASE) return false;
+  try {
+    const response = await fetch(API_BASE + "/api/health", { signal: AbortSignal.timeout(1500) });
+    const body = await response.json();
+    backendOnline = response.ok && body.ok === true;
+  } catch (error) {
+    backendOnline = false;
+  }
+  return backendOnline;
+}
+
+// A signed-in page keeps its token with the session. A pane of the
+// side-by-side view keeps one per role for as long as the tab is open.
+function apiToken() {
+  if (isEmbedded()) {
+    try {
+      return sessionStorage.getItem(EMBED_TOKEN_KEY + document.body.dataset.role) || "";
+    } catch (error) {
+      return "";
+    }
+  }
+  const session = currentSession();
+  return (session && session.token) || "";
+}
+
+async function api(method, path, body) {
+  const response = await fetch(API_BASE + path, {
+    method,
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + apiToken() },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await response.json().catch(() => ({}));
+  return { ok: response.ok, status: response.status, data };
+}
+
+// Makes sure this page has a server session before it asks for records.
+async function ensureServerSession() {
+  if (apiToken()) return true;
+
+  // signed in before the server was reachable: ask for a proper sign-in
+  if (!isEmbedded()) {
+    signOut();
+    return false;
+  }
+
+  // the side-by-side view has no sign-in step, so each pane uses the demo
+  // account of the role it shows
+  const role = document.body.dataset.role;
+  const account = accounts.find((item) => item.role === role);
+  const response = await api("POST", "/api/login", { id: account.id, password: DEMO_PASSWORD });
+  if (!response.ok) return false;
+  try {
+    sessionStorage.setItem(EMBED_TOKEN_KEY + role, response.data.token);
+  } catch (error) {
+    return false;
+  }
+  return true;
+}
+
+// Copies the server's records into this browser. Returns true if they differ
+// from what the page was showing.
+async function pullState() {
+  const response = await api("GET", "/api/state");
+  if (response.status === 401 && !isEmbedded()) {
+    signOut();
+    return false;
+  }
+  if (!response.ok) return false;
+
+  const fresh = JSON.stringify(response.data);
+  const changed = JSON.stringify(loadState()) !== fresh;
+  if (changed) {
+    try {
+      localStorage.setItem(STORE_KEY, fresh);
+    } catch (error) {
+      return false;
+    }
+  }
+  return changed;
+}
+
+// Sends an action to the server. The page has already shown the result, so
+// if the server refuses, the page reloads with the server's version.
+async function sendAction(path, body) {
+  if (!backendOnline) return;
+  actionsInFlight += 1;
+  const response = await api("POST", path, body).catch(() => ({ ok: false, data: {} }));
+  actionsInFlight -= 1;
+  if (response.ok) {
+    notifySplitView();
+    return;
+  }
+  await pullState();
+  window.alert("The server did not accept that: " + (response.data.error || "no connection"));
+  window.location.reload();
+}
+
+// Picks up changes made on other devices.
+function startPolling() {
+  setInterval(async () => {
+    const tag = document.activeElement ? document.activeElement.tagName : "";
+    const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+    if (typing || actionsInFlight > 0) return;
+    if (await pullState()) window.location.reload();
+  }, POLL_MS);
+}
+
+function showBackendStatus() {
+  const foot = document.querySelector(".page-foot");
+  if (!foot) return;
+  const text = backendOnline
+    ? "Connected to the server: records are shared across devices."
+    : "No server found: records are kept in this browser only.";
+  foot.append(el("span", "backend-status" + (backendOnline ? " online" : ""), text));
+}
+
 function loadState() {
   const state = { odApproved: [], feePaid: false };
   try {
@@ -58,7 +187,7 @@ function saveState(state) {
   } catch (error) {
     // the page still works for this visit, it just will not carry over
   }
-  notifySplitView();
+  if (!backendOnline) notifySplitView();
 }
 
 // A dashboard shown inside the side-by-side view is loaded with ?embed=split.
@@ -522,6 +651,7 @@ function renderOdApprovals() {
         saveState(state);
         showApproved();
         renderOverview();
+        sendAction("/api/od/approve", { student: request.student });
       });
       action.append(button);
     }
@@ -620,6 +750,7 @@ function renderFees() {
     showPaid();
     renderDesks();
     renderOverview();
+    sendAction("/api/fees/pay", { student: DEMO_STUDENT });
   });
   slot.append(el("strong", "text-stop", "Exam fee due · blocks hall ticket"), button);
 }
@@ -670,7 +801,10 @@ function guardPage() {
   if (slot) {
     const button = el("button", "btn outline", "Sign out");
     button.type = "button";
-    button.addEventListener("click", signOut);
+    button.addEventListener("click", async () => {
+      if (backendOnline) await api("POST", "/api/logout").catch(() => null);
+      signOut();
+    });
     // "Admin · Admin" would read oddly, so the role is added only when it differs
     const label = session.name === session.title ? session.name : session.name + " · " + session.title;
     const avatar = el("img", "session-avatar");
@@ -716,9 +850,26 @@ function setUpLogin() {
     list.append(button);
   });
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const typed = userId.value.trim().toLowerCase();
+
+    // with a server, the password is checked there and never in this file
+    if (backendOnline) {
+      const response = await api("POST", "/api/login", { id: typed, password: password.value });
+      if (!response.ok) {
+        error.textContent = response.data.error || "Sign-in failed. Try again.";
+        return;
+      }
+      const user = response.data;
+      localStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify({ role: user.role, name: user.name, title: user.title, token: user.token })
+      );
+      window.location.href = accounts.find((item) => item.role === user.role).page;
+      return;
+    }
+
     const account = accounts.find((item) => item.id === typed);
 
     // one message for both cases, so the page does not reveal which IDs exist
@@ -1024,7 +1175,8 @@ function followUpLink(target, label) {
 function setUpReset() {
   const button = document.getElementById("reset-demo");
   if (!button) return;
-  button.addEventListener("click", () => {
+  button.addEventListener("click", async () => {
+    if (backendOnline) await api("POST", "/api/reset").catch(() => null);
     try {
       localStorage.removeItem(STORE_KEY);
     } catch (error) {
@@ -1035,8 +1187,18 @@ function setUpReset() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   if (!guardPage()) return;
+
+  // dashboards load the shared records before drawing anything
+  const online = await connectBackend();
+  if (online && document.body.dataset.role) {
+    if (!(await ensureServerSession())) return;
+    await pullState();
+    startPolling();
+  }
+  showBackendStatus();
+
   setUpLogin();
   setUpSplitView();
   setUpReset();

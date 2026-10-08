@@ -1,0 +1,16 @@
+{
+  "name": "psna-hacknext-server",
+  "version": "1.0.0",
+  "description": "Backend for the PSNA Hacknext prototype: sign-in, shared state and the two cross-role actions",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
