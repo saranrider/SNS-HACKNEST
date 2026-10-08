@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alumni dashboard · College Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+</style>
+</head>
+<body>
+<div style="min-height: 100vh; background: #F3F5F8; color: #14213D; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45">
+<header style="background: #14213D; color: #FFFFFF; padding: 10px 24px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column">
+<span style="font-weight: 600; font-size: 17px">College Management System</span>
+<span style="font-size: 13px; color: #C9D2E3">[Your College Name]</span>
+</div>
+<nav aria-label="Roles" style="display: flex; flex-wrap: wrap; gap: 6px">
+<a href="index.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #64B5F6"></span>Student</a>
+<a href="staff.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #66BB6A"></span>Staff</a>
+<a href="coe.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #FBC02D"></span>COE</a>
+<a href="admin.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #FB8C00"></span>Admin</a>
+<a href="alumni.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; background: #FFFFFF; color: #14213D; text-decoration: none; font-weight: 600"><span style="width: 10px; height: 10px; border-radius: 50%; background: #6A1B9A"></span>Alumni</a>
+</nav>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 24px; max-width: 1360px; margin: 0 auto; box-sizing: border-box">
+<nav aria-label="Alumni modules" style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 13px; font-weight: 600; color: #55607A; padding: 0 12px 8px">ALUMNI MODULES</div>
+<a href="#certificate" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Certificate request</a>
+<a href="#placement" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Placement support</a>
+<a href="#news" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">News and events</a>
+<a href="#community" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Community</a>
+<a href="#business" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Business network</a>
+<a href="#profile" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Alumni database</a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font-size: 26px; font-weight: 600">Alumni dashboard</h1>
+<p style="margin: 4px 0 0; color: #55607A">Lakshmi V · MCA, 2022 batch · Sample data</p>
+</div>
+
+<section id="certificate" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start">
+<div>
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Certificate request tracker</h2>
+<p style="margin: 0 0 14px; color: #55607A; font-size: 14px">Transcript · requested 5 Oct 2026 · no visit to campus needed</p>
+</div>
+<button type="button" style="min-height: 44px; padding: 0 18px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">New certificate request</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px">
+<div style="border: 1px solid #B7DCC4; background: #DFF3E6; color: #14532D; border-radius: 6px; padding: 10px 12px"><div style="font-size: 13px">Step 1 · Done</div><div style="font-weight: 600">Request raised</div></div>
+<div style="border: 1px solid #B7DCC4; background: #DFF3E6; color: #14532D; border-radius: 6px; padding: 10px 12px"><div style="font-size: 13px">Step 2 · Automatic</div><div style="font-weight: 600">No dues confirmed</div></div>
+<div style="border: 1px solid #E8CF8A; background: #FFF1CC; color: #6B4200; border-radius: 6px; padding: 10px 12px"><div style="font-size: 13px">Step 3 · 2 days waiting</div><div style="font-weight: 600">COE verifies marks</div></div>
+<div style="border: 1px solid #D5DBE5; background: #F3F5F8; color: #55607A; border-radius: 6px; padding: 10px 12px"><div style="font-size: 13px">Step 4</div><div style="font-weight: 600">Admin desk issues</div></div>
+<div style="border: 1px solid #D5DBE5; background: #F3F5F8; color: #55607A; border-radius: 6px; padding: 10px 12px"><div style="font-size: 13px">Step 5</div><div style="font-weight: 600">Download with QR</div></div>
+</div>
+<p style="margin: 14px 0 0; font-size: 14px">Anyone who receives the certificate can scan its QR code to confirm it is genuine.</p>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
+<section id="placement" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Placement support</h2>
+<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">Referrals and mentoring you offer go straight to current students.</p>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Referral posted · Junior developer</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DDE8FB; color: #1E3A8A">7 students applied</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Project mentoring · II MCA batch 4</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Active</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1px solid #E6EAF0">
+<button type="button" style="min-height: 44px; padding: 0 16px; border: 1px solid #14213D; border-radius: 6px; background: #FFFFFF; color: #14213D; font: inherit; font-weight: 600; cursor: pointer">Post a referral</button>
+<button type="button" style="min-height: 44px; padding: 0 16px; border: 1px solid #14213D; border-radius: 6px; background: #FFFFFF; color: #14213D; font: inherit; font-weight: 600; cursor: pointer">Offer mentoring</button>
+</div>
+</section>
+
+<section id="news" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 10px; font-size: 17px; font-weight: 600">News and events</h2>
+<div style="padding: 10px 0; border-top: 1px solid #E6EAF0"><div style="font-weight: 500">Alumni meet</div><div style="font-size: 14px; color: #55607A">[DATE] · [VENUE] · registration open</div></div>
+<div style="padding: 10px 0; border-top: 1px solid #E6EAF0"><div style="font-weight: 500">Guest lecture invitation</div><div style="font-size: 14px; color: #55607A">The department is looking for speakers this semester</div></div>
+<div style="padding: 10px 0; border-top: 1px solid #E6EAF0"><div style="font-weight: 500">Department newsletter</div><div style="font-size: 14px; color: #55607A">October issue is out</div></div>
+</section>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
+<section id="community" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Community</h2>
+<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">Find batchmates by year, city or field of work.</p>
+<label for="find" style="font-size: 14px; font-weight: 500">Search alumni</label>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px">
+<input id="find" type="search" style="flex: 1 1 180px; min-height: 44px; padding: 0 10px; border: 1px solid #8A94A8; border-radius: 6px; font: inherit; color: #14213D; box-sizing: border-box">
+<button type="button" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Search</button>
+</div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; margin-top: 12px; border-top: 1px solid #E6EAF0"><span>MCA 2022 batch group</span><span style="color: #55607A">3 new posts</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Chennai chapter</span><span style="color: #55607A">1 new post</span></div>
+</section>
+
+<section id="business" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Business network</h2>
+<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">Alumni-run businesses, listed so the college and other alumni can work with them.</p>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Software services</span><span style="font-family: 'IBM Plex Mono', monospace">[COUNT]</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Training and coaching</span><span style="font-family: 'IBM Plex Mono', monospace">[COUNT]</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Other trades</span><span style="font-family: 'IBM Plex Mono', monospace">[COUNT]</span></div>
+<button type="button" style="margin-top: 12px; min-height: 44px; padding: 0 16px; border: 1px solid #14213D; border-radius: 6px; background: #FFFFFF; color: #14213D; font: inherit; font-weight: 600; cursor: pointer">List your business</button>
+</section>
+</div>
+
+<section id="profile" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start">
+<div>
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Your record in the alumni database</h2>
+<p style="margin: 0 0 14px; color: #55607A; font-size: 14px">Carried over from your student record on graduation. Keeping it current gives the college the outcome data that NBA and NAAC ask for.</p>
+</div>
+<button type="button" style="min-height: 44px; padding: 0 18px; border: 1px solid #14213D; border-radius: 6px; background: #FFFFFF; color: #14213D; font: inherit; font-weight: 600; cursor: pointer">Update details</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 24px">
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span style="color: #55607A">Programme</span><span>MCA, 2020 to 2022</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span style="color: #55607A">Current status</span><span>Employed</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span style="color: #55607A">Employer</span><span>[EMPLOYER]</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span style="color: #55607A">Higher studies</span><span>None recorded</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span style="color: #55607A">Last confirmed</span><span style="color: #6B4200">14 months ago</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span style="color: #55607A">Used in reports</span><span>NBA, NAAC</span></div>
+</div>
+</section>
+</main>
+</div>
+</div>
+</body>
+</html>
