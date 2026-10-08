@@ -6,7 +6,7 @@ const DESK_COUNT = 4;
 const HALL_TICKET_CLASS_SIZE = 5;
 
 // The student whose record is followed across the five role pages.
-const DEMO_STUDENT = "Karthik R";
+const DEMO_STUDENT = "Devi";
 
 // Actions are kept in the browser so that approving an OD request on the
 // staff page, or recording a fee on the admin page, shows up on the others.
@@ -19,11 +19,11 @@ const DEMO_PASSWORD = "demo1234";
 const SESSION_KEY = "cms-demo-session";
 
 const accounts = [
-  { id: "karthik", role: "student", name: "Karthik R", title: "Student", page: "student.html" },
-  { id: "meena", role: "staff", name: "Dr. Meena K", title: "Staff", page: "staff.html" },
-  { id: "coe", role: "coe", name: "Examinations office", title: "COE", page: "coe.html" },
-  { id: "office", role: "admin", name: "College office", title: "Admin", page: "admin.html" },
-  { id: "lakshmi", role: "alumni", name: "Lakshmi V", title: "Alumni", page: "alumni.html" },
+  { id: "devi", role: "student", name: "Devi", title: "Student", page: "student.html" },
+  { id: "saran", role: "staff", name: "Saran", title: "Staff", page: "staff.html" },
+  { id: "brundha", role: "coe", name: "Brundha", title: "COE", page: "coe.html" },
+  { id: "admin", role: "admin", name: "Admin", title: "Admin", page: "admin.html" },
+  { id: "alumni", role: "alumni", name: "Alumni", title: "Alumni", page: "alumni.html" },
 ];
 
 function currentSession() {
@@ -73,7 +73,7 @@ const courses = [
 
 const odRequests = [
   {
-    student: "Karthik R",
+    student: "Devi",
     event: "Internal hackathon · 6 Oct",
     periods: 6,
     attended: 146,
@@ -108,7 +108,7 @@ const pastProjects = [
     title: "Smart attendance system using face recognition",
     year: 2024,
     team: "Batch 6, MCA 2022-24",
-    guide: "Dr. Meena K",
+    guide: "Saran",
     summary:
       "Classroom camera images are used to detect and recognise student faces with a deep learning model and mark attendance for each period.",
     done: ["Face detection and recognition model", "Attendance marked for one classroom"],
@@ -586,7 +586,7 @@ function renderDesks() {
 const STUDENTS_WITH_BALANCE = 3;
 
 function renderFees() {
-  const slot = document.getElementById("fee-karthik");
+  const slot = document.getElementById("fee-devi");
   if (!slot) return;
 
   const state = loadState();
@@ -654,7 +654,9 @@ function guardPage() {
     const button = el("button", "btn outline", "Sign out");
     button.type = "button";
     button.addEventListener("click", signOut);
-    slot.append(el("span", "session-user", session.name + " · " + session.title), button);
+    // "Admin · Admin" would read oddly, so the role is added only when it differs
+    const label = session.name === session.title ? session.name : session.name + " · " + session.title;
+    slot.append(el("span", "session-user", label), button);
   }
   return true;
 }
