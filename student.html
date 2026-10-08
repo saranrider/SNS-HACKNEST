@@ -28,6 +28,7 @@
       <a href="#project">Project follow-up</a>
       <a href="#circulars">Circulars</a>
       <a href="#query">Query</a>
+      <a href="#requests">Requests</a>
     </nav>
 
     <main class="content">
@@ -91,13 +92,24 @@
         </div>
       </section>
 
+      <section class="card" id="requests">
+        <div class="card-head">
+          <div>
+            <h2>Requests</h2>
+            <p class="sub">Anything not covered elsewhere goes to your class advisor, who is told at once. You are told when it is accepted.</p>
+          </div>
+          <button type="button" class="btn" data-request="general" data-ask="What do you need" data-send="Send to class advisor">New request</button>
+        </div>
+        <div data-my-requests="general" aria-live="polite"></div>
+      </section>
+
       <section class="card" id="od">
         <div class="card-head">
           <div>
             <h2>OD request tracker</h2>
             <p class="sub">Internal hackathon, 6 Oct 2026 · 6 periods missed · participant list verified by the organiser</p>
           </div>
-          <button type="button" class="btn" data-request="od" data-ask="Event, date and periods missed" data-send="Send to class advisor">New OD request</button>
+          <button type="button" class="btn" data-request="od" data-ask="Event or reason" data-send="Send to class advisor">New OD request</button>
         </div>
         <ol class="steps">
           <li class="done"><small>Step 1 · Done</small><strong>Submitted</strong></li>
@@ -126,15 +138,20 @@
           <div class="row"><span>No dues</span><span class="pill" id="ht-dues" data-followup="coe#hallticket"></span></div>
           <div class="row"><span>Internal assessment 1</span><span class="mono">41 / 50</span></div>
           <div class="row"><span>Last semester GPA</span><span class="mono">8.12</span></div>
+          <div class="actions">
+            <button type="button" class="btn" data-request="hallticket" data-fixed="End semester examination, November 2026">Request hall ticket</button>
+          </div>
+          <div data-my-requests="hallticket" aria-live="polite"></div>
         </section>
       </div>
 
       <div class="grid-2">
         <section class="card" id="assignments">
           <h2>Assignment reminders</h2>
-          <div class="row"><span>DBMS · Normalisation exercise</span><strong class="text-stop">Due tomorrow</strong></div>
-          <div class="row"><span>Digital Marketing · Campaign brief</span><strong class="text-wait">Due 12 Oct</strong></div>
-          <div class="row"><span>Operating Systems · Scheduling lab record</span><span class="muted">Due 16 Oct</span></div>
+          <div class="row wrap"><span>DBMS · Normalisation exercise<span class="detail text-stop">Due tomorrow</span></span><button type="button" class="btn outline" data-request="submission" data-fixed="DBMS · Normalisation exercise">Submit</button></div>
+          <div class="row wrap"><span>Digital Marketing · Campaign brief<span class="detail">Due 12 Oct</span></span><button type="button" class="btn outline" data-request="submission" data-fixed="Digital Marketing · Campaign brief">Submit</button></div>
+          <div class="row wrap"><span>Operating Systems · Scheduling lab record<span class="detail">Due 16 Oct</span></span><button type="button" class="btn outline" data-request="submission" data-fixed="Operating Systems · Scheduling lab record">Submit</button></div>
+          <div data-my-requests="submission" aria-live="polite"></div>
         </section>
 
         <section class="card" id="circulars">

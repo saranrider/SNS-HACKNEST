@@ -152,7 +152,7 @@ async function sendAction(path, body) {
 function midEntry() {
   const active = document.activeElement;
   if (active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName)) return true;
-  return Array.from(document.querySelectorAll("input[type=text], input[type=search], textarea")).some(
+  return Array.from(document.querySelectorAll("input[type=text], input[type=search], input[type=datetime-local], textarea")).some(
     (field) => field.offsetParent !== null && field.value !== field.defaultValue
   );
 }
@@ -1404,6 +1404,9 @@ function renderApprovals() {
 // The server holds the same list and is the one that counts.
 const requestKinds = {
   od: { to: "staff", label: "OD request", accepted: "approved", accept: "Approve" },
+  hallticket: { to: "coe", label: "Hall ticket request", accepted: "issued", accept: "Issue hall ticket", decision: "hallticket.devi" },
+  submission: { to: "staff", label: "Assignment submission", accepted: "accepted", accept: "Accept submission" },
+  general: { label: "Request", accepted: "accepted", accept: "Accept" },
   duty: { to: "admin", label: "Duty change", accepted: "approved", accept: "Approve" },
   certificate: { to: "admin", label: "Certificate request", accepted: "issued", accept: "Issue" },
   referral: { to: "admin", label: "Job referral", accepted: "published", accept: "Publish", announce: "student" },
@@ -1412,13 +1415,27 @@ const requestKinds = {
   profile: { to: "admin", label: "Record update", accepted: "updated", accept: "Update record" },
 };
 
-function addRequest(kind, text) {
+// A general request goes one step up, to the sender's own superior.
+const superiorOf = { student: "staff", staff: "coe", coe: "admin", alumni: "admin" };
+
+// "2026-10-12T09:00" -> "12 Oct 2026, 09:00"
+function readableDateTime(value) {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value);
+  if (!match) return "";
+  return Number(match[3]) + " " + months[Number(match[2]) - 1] + " " + match[1] + ", " + match[4] + ":" + match[5];
+}
+
+// "dates" is { from, to } for the kinds that need a start and an end.
+function addRequest(kind, text, dates) {
   const rule = requestKinds[kind];
+  const toRole = rule.to || superiorOf[document.body.dataset.role];
+  const shown = dates ? text + " · from " + readableDateTime(dates.from) + " to " + readableDateTime(dates.to) : text;
   const state = loadState();
-  state.requests.push({ id: "local-" + Date.now(), kind, text, fromName: currentUserName(), toRole: rule.to, status: "open" });
-  addNote(state, rule.to, "New " + rule.label.toLowerCase() + " from " + currentUserName() + ": " + text);
+  state.requests.push({ id: "local-" + Date.now(), kind, text: shown, fromName: currentUserName(), toRole, status: "open" });
+  addNote(state, toRole, "New " + rule.label.toLowerCase() + " from " + currentUserName() + ": " + shown);
   saveState(state);
-  sendAction("/api/requests", { kind, text });
+  sendAction("/api/requests", Object.assign({ kind, text }, dates || {}));
 }
 
 function acceptRequest(id) {
@@ -1426,6 +1443,14 @@ function acceptRequest(id) {
   const request = state.requests.find((item) => item.id === id);
   if (!request || request.status !== "open") return;
   const rule = requestKinds[request.kind];
+  if (rule.decision) {
+    const blocked = approvalBlocked(rule.decision);
+    if (blocked) {
+      window.alert(blocked);
+      return;
+    }
+    if (!state.decisions.includes(rule.decision)) state.decisions.push(rule.decision);
+  }
   request.status = "accepted";
   const sender = accounts.find((item) => item.name === request.fromName);
   if (sender) {
@@ -1438,19 +1463,35 @@ function acceptRequest(id) {
   sendAction("/api/requests/accept", { id });
 }
 
+function labelled(form, id, text, field) {
+  const label = el("label", "", text);
+  label.htmlFor = id;
+  field.id = id;
+  form.append(label, field);
+  return field;
+}
+
 // <button data-request="kind"> opens a short form under its card heading.
 // data-options="A|B" asks with a list instead of a text box.
+// data-fixed="text" needs no form: one press sends that text.
+// An OD request also asks for the start and end, as date and time.
 function setUpRequestForms() {
   document.querySelectorAll("[data-request]").forEach((button) => {
     if (button.dataset.ready) return;
     button.dataset.ready = "yes";
     const kind = button.dataset.request;
 
+    if (button.dataset.fixed) {
+      button.addEventListener("click", () => {
+        addRequest(kind, button.dataset.fixed);
+        renderRequests();
+      });
+      return;
+    }
+
     const form = el("form", "form request-form");
     form.hidden = true;
-    const fieldId = "request-" + kind;
-    const label = el("label", "", button.dataset.ask);
-    label.htmlFor = fieldId;
+    form.noValidate = true; // the messages below are clearer than the browser's own
     let field;
     if (button.dataset.options) {
       field = el("select");
@@ -1458,14 +1499,31 @@ function setUpRequestForms() {
     } else {
       field = el("input");
       field.type = "text";
-      field.maxLength = 300;
+      field.maxLength = 200;
     }
-    field.id = fieldId;
+    labelled(form, "request-" + kind, button.dataset.ask, field);
+
+    let from = null;
+    let to = null;
+    if (kind === "od") {
+      const times = el("div", "request-times");
+      const start = el("div", "field");
+      const end = el("div", "field");
+      from = el("input");
+      from.type = "datetime-local";
+      to = el("input");
+      to.type = "datetime-local";
+      labelled(start, "request-od-from", "From (date and time)", from);
+      labelled(end, "request-od-to", "To (date and time)", to);
+      times.append(start, end);
+      form.append(times);
+    }
+
     const send = el("button", "btn", button.dataset.send || "Send");
     send.type = "submit";
     const problem = el("p", "text-stop");
     problem.setAttribute("role", "alert");
-    form.append(label, field, send, problem);
+    form.append(send, problem);
 
     // the form sits under the heading row or button row the button is in
     const holder = button.closest(".card-head, .actions, .row") || button;
@@ -1486,9 +1544,27 @@ function setUpRequestForms() {
         field.focus();
         return;
       }
+      let dates = null;
+      if (from) {
+        if (!from.value || !to.value) {
+          problem.textContent = "Choose the date and time for both From and To.";
+          (from.value ? to : from).focus();
+          return;
+        }
+        if (to.value <= from.value) {
+          problem.textContent = "To must be later than From.";
+          to.focus();
+          return;
+        }
+        dates = { from: from.value, to: to.value };
+      }
       problem.textContent = "";
-      addRequest(kind, (button.dataset.prefix || "") + typed);
+      addRequest(kind, (button.dataset.prefix || "") + typed, dates);
       if (field.tagName === "INPUT") field.value = "";
+      if (from) {
+        from.value = "";
+        to.value = "";
+      }
       form.hidden = true;
       button.setAttribute("aria-expanded", "false");
       renderRequests();
@@ -1496,33 +1572,46 @@ function setUpRequestForms() {
   });
 }
 
+function titleOf(role) {
+  return accounts.find((account) => account.role === role).title;
+}
+
 // data-my-requests="kinds" lists what this person has asked for;
 // data-inbox="kinds" lists what is waiting for this role to accept.
 function renderRequests() {
   const role = document.body.dataset.role;
   const requests = loadState().requests;
+  const me = currentUserName();
+  const capital = (word) => word.charAt(0).toUpperCase() + word.slice(1);
 
   document.querySelectorAll("[data-my-requests]").forEach((box) => {
     const kinds = box.dataset.myRequests.split(" ");
-    const mine = requests.filter((item) => kinds.includes(item.kind) && item.fromName === currentUserName());
+    const mine = requests.filter((item) => kinds.includes(item.kind) && item.fromName === me);
     box.replaceChildren();
     mine.forEach((item) => {
       const rule = requestKinds[item.kind];
-      const target = accounts.find((account) => account.role === rule.to).title;
+      const target = titleOf(item.toRole);
       const row = el("div", "row wrap");
       const label = el("span", "", item.text);
       label.append(el("span", "detail", rule.label + " · sent to " + target));
       const open = item.status === "open";
-      const done = rule.accepted.charAt(0).toUpperCase() + rule.accepted.slice(1);
-      row.append(label, el("span", "pill " + (open ? "wait" : "ok"), open ? "Waiting for " + target : done));
+      row.append(label, el("span", "pill " + (open ? "wait" : "ok"), open ? "Waiting for " + target : capital(rule.accepted)));
       box.append(row);
     });
   });
 
+  // a one-press request can be sent once; after that its status is in the list
+  document.querySelectorAll("[data-request][data-fixed]").forEach((button) => {
+    button.hidden = requests.some(
+      (item) => item.kind === button.dataset.request && item.text === button.dataset.fixed && item.fromName === me
+    );
+  });
+
   document.querySelectorAll("[data-inbox]").forEach((box) => {
     const kinds = box.dataset.inbox.split(" ");
-    const waiting = requests.filter((item) => kinds.includes(item.kind) && item.toRole === role);
+    const waiting = requests.filter((item) => kinds.includes(item.kind) && item.toRole === role && item.fromName !== me);
     box.replaceChildren();
+    if (waiting.length === 0 && box.dataset.empty) box.append(el("p", "note muted", box.dataset.empty));
     waiting.forEach((item) => {
       const rule = requestKinds[item.kind];
       const row = el("div", "row wrap");
@@ -1535,11 +1624,12 @@ function renderRequests() {
         button.addEventListener("click", () => {
           acceptRequest(item.id);
           renderRequests();
+          renderApprovals();
+          renderHallTickets();
         });
         row.append(button);
       } else {
-        const done = rule.accepted.charAt(0).toUpperCase() + rule.accepted.slice(1);
-        row.append(el("span", "pill ok", done + " · " + item.fromName + " notified"));
+        row.append(el("span", "pill ok", capital(rule.accepted) + " · " + item.fromName + " notified"));
       }
       box.append(row);
     });

@@ -105,23 +105,29 @@ a {
 /* ---------- page layout ---------- */
 
 .layout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
   max-width: 1360px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 0 24px 24px;
 }
 
+/* the module menu runs along the top and stays in view while scrolling */
 .sidenav {
-  flex: 1 1 200px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto; /* one row; it scrolls sideways on a narrow screen */
+  margin: 0 -24px 20px;
+  padding: 8px 24px;
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
 }
 
 .sidenav h2 {
-  padding: 0 12px 8px;
+  margin-right: 8px;
+  white-space: nowrap;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -132,19 +138,21 @@ a {
 .sidenav a {
   display: flex;
   align-items: center;
-  min-height: 44px;
+  min-height: 40px;
   padding: 0 12px;
   border-radius: 6px;
   color: var(--text);
+  font-weight: 500;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.sidenav a:hover {
+.sidenav a:hover,
+.sidenav a:focus-visible {
   background: var(--blue-100);
 }
 
 .content {
-  flex: 999 1 560px;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -1078,7 +1086,7 @@ td {
 
 /* a section opened from a follow-up should not sit under the page edge */
 .content section {
-  scroll-margin-top: 16px;
+  scroll-margin-top: 72px; /* clears the module menu */
 }
 
 /* ---------- server connection note in the footer ---------- */
@@ -1187,4 +1195,22 @@ td {
 
 .request-form .text-stop {
   margin: 0;
+}
+
+.request-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+.request-times .field {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+h3.section-label {
+  margin-top: 16px;
 }
