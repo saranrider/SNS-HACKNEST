@@ -1,4 +1,4 @@
-// College Management System - page behaviour.
+// PSNA Hacknext - page behaviour.
 // Every page loads this file; each section only runs if its container exists.
 
 const MIN_ATTENDANCE = 0.75;
