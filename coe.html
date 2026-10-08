@@ -1,129 +1,129 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Controller of Examinations dashboard · College Management System</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
-<style>
-body{margin:0}
-a{color:#1D4ED8}a:hover{color:#1E3A8A}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Controller of Examinations · College Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div style="min-height: 100vh; background: #F3F5F8; color: #14213D; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45">
-<header style="background: #14213D; color: #FFFFFF; padding: 10px 24px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between">
-<div style="display: flex; flex-direction: column">
-<span style="font-weight: 600; font-size: 17px">College Management System</span>
-<span style="font-size: 13px; color: #C9D2E3">[Your College Name]</span>
-</div>
-<nav aria-label="Roles" style="display: flex; flex-wrap: wrap; gap: 6px">
-<a href="index.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #64B5F6"></span>Student</a>
-<a href="staff.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #66BB6A"></span>Staff</a>
-<a href="coe.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; background: #FFFFFF; color: #14213D; text-decoration: none; font-weight: 600"><span style="width: 10px; height: 10px; border-radius: 50%; background: #B8860B"></span>COE</a>
-<a href="admin.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #FB8C00"></span>Admin</a>
-<a href="alumni.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #BA68C8"></span>Alumni</a>
-</nav>
-</header>
+  <header class="topbar">
+    <div class="brand">
+      <strong>College Management System</strong>
+      <span>[Your College Name]</span>
+    </div>
+    <nav class="roles" aria-label="Roles">
+      <a href="index.html">Student</a>
+      <a href="staff.html">Staff</a>
+      <a href="coe.html" class="active" aria-current="page">COE</a>
+      <a href="admin.html">Admin</a>
+      <a href="alumni.html">Alumni</a>
+    </nav>
+  </header>
 
-<div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 24px; max-width: 1360px; margin: 0 auto; box-sizing: border-box">
-<nav aria-label="Examination modules" style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px">
-<div style="font-size: 13px; font-weight: 600; color: #55607A; padding: 0 12px 8px">EXAMINATION MODULES</div>
-<a href="#syllabus" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Syllabus and blueprint</a>
-<a href="#scrutiny" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Question paper scrutiny</a>
-<a href="#hallticket" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Hall ticket issue</a>
-<a href="#results" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Exam conduct and results</a>
-<a href="#certificates" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Certificate approval</a>
-</nav>
+  <div class="layout">
+    <nav class="sidenav" aria-label="Examination modules">
+      <h2>Examination modules</h2>
+      <a href="#syllabus">Syllabus and blueprint</a>
+      <a href="#scrutiny">Question paper scrutiny</a>
+      <a href="#hallticket">Hall ticket issue</a>
+      <a href="#results">Exam conduct and results</a>
+      <a href="#certificates">Certificate approval</a>
+    </nav>
 
-<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
-<div>
-<h1 style="margin: 0; font-size: 26px; font-weight: 600">Controller of Examinations</h1>
-<p style="margin: 4px 0 0; color: #55607A">The single link between syllabus, examinations and academic certificates · Sample data</p>
-</div>
+    <main class="content">
+      <div class="page-head">
+        <h1>Controller of Examinations</h1>
+        <p>The single link between syllabus, examinations and academic certificates · Sample data</p>
+      </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
-<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
-<div style="font-size: 13px; color: #55607A">Syllabi to approve</div>
-<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">2</div>
-<div style="font-size: 14px; color: #55607A">From 2 departments</div>
-</div>
-<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
-<div style="font-size: 13px; color: #55607A">Papers in scrutiny</div>
-<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">3</div>
-<div style="font-size: 14px; color: #6B4200">1 returned to staff</div>
-</div>
-<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
-<div style="font-size: 13px; color: #55607A">Hall tickets · II MCA</div>
-<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">3 / 5</div>
-<div style="font-size: 14px; color: #8A1C12">2 on hold</div>
-</div>
-<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
-<div style="font-size: 13px; color: #55607A">Certificates to verify</div>
-<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">2</div>
-<div style="font-size: 14px; color: #55607A">Sent by the admin desk</div>
-</div>
-</div>
+      <div class="stats">
+        <div class="stat">
+          <div class="label">Syllabi to approve</div>
+          <div class="value">2</div>
+          <div class="hint">From 2 staff members</div>
+        </div>
+        <div class="stat">
+          <div class="label">Papers in scrutiny</div>
+          <div class="value">3</div>
+          <div class="hint wait">1 returned to staff</div>
+        </div>
+        <div class="stat">
+          <div class="label">Hall tickets · II MCA</div>
+          <div class="value">3 / 5</div>
+          <div class="hint stop">2 on hold</div>
+        </div>
+        <div class="stat">
+          <div class="label">Certificates to verify</div>
+          <div class="value">2</div>
+          <div class="hint">Sent by the admin desk</div>
+        </div>
+      </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
-<section id="syllabus" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
-<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Syllabus and blueprint approval</h2>
-<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">Staff submit the syllabus. The approved version sets unit weightage for every question paper.</p>
-<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid #E6EAF0"><span>Data Structures · Dr. Meena K</span><button type="button" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Review</button></div>
-<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid #E6EAF0"><span>Software Engineering · Mr. Ravi T</span><button type="button" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Review</button></div>
-<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Database Systems · Dr. Meena K</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Approved · 20 marks per unit</span></div>
-</section>
+      <div class="grid-2">
+        <section class="card" id="syllabus">
+          <h2>Syllabus and blueprint approval</h2>
+          <p class="sub">Staff submit the syllabus. The approved version sets unit weightage for every question paper.</p>
+          <div class="row"><span>Data Structures · Dr. Meena K</span><button type="button" class="btn">Review</button></div>
+          <div class="row"><span>Software Engineering · Mr. Ravi T</span><button type="button" class="btn">Review</button></div>
+          <div class="row"><span>Database Systems · Dr. Meena K</span><span class="pill ok">Approved · 20 marks per unit</span></div>
+        </section>
 
-<section id="scrutiny" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
-<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Question paper scrutiny</h2>
-<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">Papers arrive with the blueprint check already attached.</p>
-<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Operating Systems</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Blueprint passed · approve</span></div>
-<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Digital Marketing</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Blueprint passed · approve</span></div>
-<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Database Systems</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FDE2DF; color: #8A1C12">2 unit gaps · with staff</span></div>
-</section>
-</div>
+        <section class="card" id="scrutiny">
+          <h2>Question paper scrutiny</h2>
+          <p class="sub">Papers arrive with the blueprint check already attached.</p>
+          <div class="row"><span>Operating Systems</span><span class="pill ok">Blueprint passed · approve</span></div>
+          <div class="row"><span>Digital Marketing</span><span class="pill ok">Blueprint passed · approve</span></div>
+          <div class="row"><span>Database Systems</span><span class="pill stop">2 unit gaps · with staff</span></div>
+        </section>
+      </div>
 
-<section id="hallticket" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
-<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start">
-<div>
-<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Hall ticket issue</h2>
-<p style="margin: 0 0 14px; color: #55607A; font-size: 14px">Eligibility is read from the attendance record and the no dues clearance. Nothing is typed in again.</p>
-</div>
-<button type="button" style="min-height: 44px; padding: 0 18px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Issue to all eligible</button>
-</div>
-<div style="overflow-x: auto">
-<div style="min-width: 640px">
-<div style="display: grid; grid-template-columns: 1.5fr 1.2fr 1.4fr 1.8fr; gap: 12px; padding: 8px 0; font-size: 13px; font-weight: 600; color: #55607A">
-<span>Student</span><span>Attendance</span><span>No dues</span><span>Hall ticket</span>
-</div>
-<div style="display: grid; grid-template-columns: 1.5fr 1.2fr 1.4fr 1.8fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center"><span>Arun P</span><span style="font-family: 'IBM Plex Mono', monospace">80.6%</span><span>4 of 4 desks</span><span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Issued</span></span></div>
-<div style="display: grid; grid-template-columns: 1.5fr 1.2fr 1.4fr 1.8fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center"><span>Divya S</span><span style="font-family: 'IBM Plex Mono', monospace">76.5%</span><span>4 of 4 desks</span><span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Issued</span></span></div>
-<div style="display: grid; grid-template-columns: 1.5fr 1.2fr 1.4fr 1.8fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center"><span>Farida B</span><span style="font-family: 'IBM Plex Mono', monospace">88.3%</span><span>4 of 4 desks</span><span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Issued</span></span></div>
-<div style="display: grid; grid-template-columns: 1.5fr 1.2fr 1.4fr 1.8fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center"><span>Karthik R</span><span style="font-family: 'IBM Plex Mono', monospace; color: #8A1C12">74.5%</span><span style="color: #6B4200">3 of 4 desks</span><span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FDE2DF; color: #8A1C12">On hold · OD pending, fee due</span></span></div>
-<div style="display: grid; grid-template-columns: 1.5fr 1.2fr 1.4fr 1.8fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center"><span>Naveen M</span><span style="font-family: 'IBM Plex Mono', monospace">79.1%</span><span style="color: #6B4200">3 of 4 desks</span><span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">On hold · library book due</span></span></div>
-</div>
-</div>
-</section>
+      <section class="card" id="hallticket">
+        <div class="card-head">
+          <div>
+            <h2>Hall ticket issue</h2>
+            <p class="sub">Eligibility is read from the attendance record and the no dues clearance. Nothing is typed in again.</p>
+          </div>
+          <button type="button" class="btn">Issue to all eligible</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Student</th><th>Attendance</th><th>No dues</th><th>Hall ticket</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Arun P</td><td class="mono">80.6%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
+              <tr><td>Divya S</td><td class="mono">76.5%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
+              <tr><td>Farida B</td><td class="mono">88.3%</td><td>4 of 4 desks</td><td><span class="pill ok">Issued</span></td></tr>
+              <tr><td>Karthik R</td><td class="mono text-stop">74.5%</td><td class="text-wait">3 of 4 desks</td><td><span class="pill stop">On hold · OD pending, fee due</span></td></tr>
+              <tr><td>Naveen M</td><td class="mono">79.1%</td><td class="text-wait">3 of 4 desks</td><td><span class="pill wait">On hold · library book due</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
-<section id="results" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
-<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Exam conduct and results</h2>
-<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">Published results update the student record and supply attainment data for NBA.</p>
-<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Internal assessment 1</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Published</span></div>
-<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Internal assessment 2</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DDE8FB; color: #1E3A8A">Starts 26 Oct</span></div>
-<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>End semester examination</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">2 of 5 papers approved</span></div>
-</section>
+      <div class="grid-2">
+        <section class="card" id="results">
+          <h2>Exam conduct and results</h2>
+          <p class="sub">Published results update the student record and supply attainment data for NBA.</p>
+          <div class="row"><span>Internal assessment 1</span><span class="pill ok">Published</span></div>
+          <div class="row"><span>Internal assessment 2</span><span class="pill">Starts 26 Oct</span></div>
+          <div class="row"><span>End semester examination</span><span class="pill wait">2 of 5 papers approved</span></div>
+        </section>
 
-<section id="certificates" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
-<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Academic certificate approval</h2>
-<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">The admin desk issues a certificate only after marks are verified here.</p>
-<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid #E6EAF0"><span>Transcript · Lakshmi V · alumna, 2022 batch</span><button type="button" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Verify marks</button></div>
-<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid #E6EAF0"><span>Course completion · Suresh N · 2025 batch</span><button type="button" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Verify marks</button></div>
-<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Consolidated marksheet · Anitha J</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Verified · back with admin</span></div>
-</section>
-</div>
-</main>
-</div>
-</div>
+        <section class="card" id="certificates">
+          <h2>Academic certificate approval</h2>
+          <p class="sub">The admin desk issues a certificate only after marks are verified here.</p>
+          <div class="row"><span>Transcript · Lakshmi V · alumna, 2022 batch</span><button type="button" class="btn">Verify marks</button></div>
+          <div class="row"><span>Course completion · Suresh N · 2025 batch</span><button type="button" class="btn">Verify marks</button></div>
+          <div class="row"><span>Consolidated marksheet · Anitha J</span><span class="pill ok">Verified · back with admin</span></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>

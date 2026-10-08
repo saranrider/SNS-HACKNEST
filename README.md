@@ -1,15 +1,28 @@
 # College Management System: UI prototype (PS06)
 
-Static, clickable screens for the five roles in our workflow diagram. Open `index.html` in a browser; no build step or server is needed.
+Static, clickable screens for the five roles in our workflow diagram. Open `index.html` in a browser; there is no build step and no server.
 
-| File | Role |
+## Files
+
+| File | What it is |
 |---|---|
-| `index.html` | Student |
-| `staff.html` | Staff |
-| `coe.html` | Controller of Examinations |
-| `admin.html` | Admin and Support |
-| `alumni.html` | Alumni |
+| `index.html` | Student dashboard |
+| `staff.html` | Staff dashboard |
+| `coe.html` | Controller of Examinations dashboard |
+| `admin.html` | Admin and Support dashboard |
+| `alumni.html` | Alumni dashboard |
+| `styles.css` | Shared blue and white theme |
+| `app.js` | Sample data and page logic |
 
-The top bar switches between roles. The Approve button on the Staff page works. All names, marks and counts are sample data.
+## What works
 
-To publish as a live site: repository Settings, Pages, deploy from branch `main`, folder `/docs`.
+- The top bar switches between roles.
+- Student: the attendance table and shortage meter are calculated in `app.js` from the `courses` array, using the 75% rule.
+- Staff: the Approve button on OD requests updates the row and the waiting count. The blueprint bars are drawn from the `blueprint` object.
+- Admin: the no-dues table finds the slowest desk from the `desks` array.
+
+Everything else is static markup. All names, marks and counts are sample data.
+
+## Publishing
+
+Repository Settings, Pages, deploy from branch `main`, folder `/docs`.
