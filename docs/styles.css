@@ -1028,3 +1028,117 @@ td {
 .embedded .page-foot {
   padding: 0 16px 24px;
 }
+
+/* ---------- overview panel (staff, COE, admin) ---------- */
+
+.card {
+  box-shadow: 0 1px 2px rgba(11, 42, 91, 0.06);
+}
+
+.overview {
+  padding: 24px;
+}
+
+.overview-line {
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--blue-900);
+}
+
+.trackers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 24px 32px;
+}
+
+.tracker-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tracker-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tracker-value {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--blue-900);
+  white-space: nowrap;
+}
+
+.tracker .hint {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.tracker .hint.wait {
+  color: var(--wait-fg);
+}
+
+.tracker .hint.stop {
+  color: var(--stop-fg);
+}
+
+/* one segment per item, with a 2px gap so neighbours stay separate */
+.segments {
+  display: flex;
+  gap: 2px;
+  margin: 8px 0 6px;
+}
+
+.segment {
+  position: relative;
+  flex: 1;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--blue-100);
+}
+
+.segment.done {
+  background: var(--blue-700);
+}
+
+.segment.bad {
+  background: #b42318;
+}
+
+.segment:hover::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--blue-900);
+  color: var(--white);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* keep the label inside the card at both ends of the row */
+.segment:first-child:hover::after {
+  left: 0;
+  transform: none;
+}
+
+.segment:last-child:hover::after {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+/* student readiness panel: figures in the text face, red track when short */
+.gate-value {
+  font-weight: 600;
+}
+
+.meter.low {
+  background: #f8dcd8;
+}
