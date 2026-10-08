@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin and support dashboard · College Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+</style>
+</head>
+<body>
+<div style="min-height: 100vh; background: #F3F5F8; color: #14213D; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45">
+<header style="background: #14213D; color: #FFFFFF; padding: 10px 24px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column">
+<span style="font-weight: 600; font-size: 17px">College Management System</span>
+<span style="font-size: 13px; color: #C9D2E3">[Your College Name]</span>
+</div>
+<nav aria-label="Roles" style="display: flex; flex-wrap: wrap; gap: 6px">
+<a href="index.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #64B5F6"></span>Student</a>
+<a href="staff.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #66BB6A"></span>Staff</a>
+<a href="coe.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #FBC02D"></span>COE</a>
+<a href="admin.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; background: #FFFFFF; color: #14213D; text-decoration: none; font-weight: 600"><span style="width: 10px; height: 10px; border-radius: 50%; background: #EF6C00"></span>Admin</a>
+<a href="alumni.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #BA68C8"></span>Alumni</a>
+</nav>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 24px; max-width: 1360px; margin: 0 auto; box-sizing: border-box">
+<nav aria-label="Admin modules" style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 13px; font-weight: 600; color: #55607A; padding: 0 12px 8px">ADMIN AND SUPPORT</div>
+<a href="#nodues" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">No dues clearance</a>
+<a href="#fees" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Fee follow-up</a>
+<a href="#certificates" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Certificate issue</a>
+<a href="#salary" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Salary calculation</a>
+<a href="#support" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Support desk</a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font-size: 26px; font-weight: 600">Admin and support</h1>
+<p style="margin: 4px 0 0; color: #55607A">College office · Sample data</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
+<div style="font-size: 13px; color: #55607A">No dues requests open</div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">12</div>
+<div style="font-size: 14px; color: #8A1C12">Slowest desk: Accounts</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
+<div style="font-size: 13px; color: #55607A">Students with fee balance</div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">3</div>
+<div style="font-size: 14px; color: #6B4200">Exam fee closes 15 Oct</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
+<div style="font-size: 13px; color: #55607A">Certificates in progress</div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">4</div>
+<div style="font-size: 14px; color: #55607A">2 waiting for COE</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
+<div style="font-size: 13px; color: #55607A">Support tickets open</div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">3</div>
+<div style="font-size: 14px; color: #55607A">From students and staff</div>
+</div>
+</div>
+
+<section id="nodues" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">No dues clearance · where requests are waiting</h2>
+<p style="margin: 0 0 14px; color: #55607A; font-size: 14px">Each desk clears in parallel. A desk clears automatically when the dues record shows nothing owed.</p>
+<div style="overflow-x: auto">
+<div style="min-width: 640px">
+<div style="display: grid; grid-template-columns: 1.1fr 1fr 1fr 2.4fr; gap: 12px; padding: 8px 0; font-size: 13px; font-weight: 600; color: #55607A">
+<span>Desk</span><span>Auto-cleared</span><span>Open now</span><span>Average wait in days</span>
+</div>
+<div style="display: grid; grid-template-columns: 1.1fr 1fr 1fr 2.4fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center">
+<span style="font-weight: 500">Library</span>
+<span style="font-family: 'IBM Plex Mono', monospace">41</span>
+<span style="font-family: 'IBM Plex Mono', monospace">2</span>
+<span style="display: grid; grid-template-columns: 1fr 48px; gap: 10px; align-items: center"><span style="display: block; height: 14px; background: #E6EAF0; border-radius: 3px"><span style="display: block; height: 14px; border-radius: 3px; width: 15%; background: #44546F"></span></span><span style="font-family: 'IBM Plex Mono', monospace">0.4</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 1.1fr 1fr 1fr 2.4fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center">
+<span style="font-weight: 500">Laboratory</span>
+<span style="font-family: 'IBM Plex Mono', monospace">44</span>
+<span style="font-family: 'IBM Plex Mono', monospace">1</span>
+<span style="display: grid; grid-template-columns: 1fr 48px; gap: 10px; align-items: center"><span style="display: block; height: 14px; background: #E6EAF0; border-radius: 3px"><span style="display: block; height: 14px; border-radius: 3px; width: 12%; background: #44546F"></span></span><span style="font-family: 'IBM Plex Mono', monospace">0.3</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 1.1fr 1fr 1fr 2.4fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center">
+<span style="font-weight: 500">Hostel</span>
+<span style="font-family: 'IBM Plex Mono', monospace">18</span>
+<span style="font-family: 'IBM Plex Mono', monospace">3</span>
+<span style="display: grid; grid-template-columns: 1fr 48px; gap: 10px; align-items: center"><span style="display: block; height: 14px; background: #E6EAF0; border-radius: 3px"><span style="display: block; height: 14px; border-radius: 3px; width: 46%; background: #44546F"></span></span><span style="font-family: 'IBM Plex Mono', monospace">1.2</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 1.1fr 1fr 1fr 2.4fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center">
+<span style="font-weight: 500">Accounts</span>
+<span style="font-family: 'IBM Plex Mono', monospace">36</span>
+<span style="font-family: 'IBM Plex Mono', monospace">6</span>
+<span style="display: grid; grid-template-columns: 1fr 48px; gap: 10px; align-items: center"><span style="display: block; height: 14px; background: #E6EAF0; border-radius: 3px"><span style="display: block; height: 14px; border-radius: 3px; width: 100%; background: #B42318"></span></span><span style="font-family: 'IBM Plex Mono', monospace">2.6</span></span>
+</div>
+</div>
+</div>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
+<section id="fees" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 10px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 600">Fee follow-up</h2>
+<button type="button" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Send reminders</button>
+</div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Karthik R · II MCA</span><span style="color: #8A1C12; font-weight: 500">Exam fee due · blocks hall ticket</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Priya D · I MCA</span><span style="color: #6B4200; font-weight: 500">Second instalment due 20 Oct</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Vignesh A · II MCA</span><span style="color: #6B4200; font-weight: 500">Hostel fee due 31 Oct</span></div>
+<p style="margin: 10px 0 0; font-size: 14px; color: #55607A">A payment updates the dues record, and the accounts desk clears by itself.</p>
+</section>
+
+<section id="certificates" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Certificate issue</h2>
+<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">Student and alumni requests share one queue. Issued certificates carry a QR code for verification.</p>
+<div style="padding: 10px 0; border-top: 1px solid #E6EAF0"><div style="display: flex; justify-content: space-between; gap: 12px"><span>Bonafide · Divya S</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Issued with QR</span></div></div>
+<div style="padding: 10px 0; border-top: 1px solid #E6EAF0"><div style="display: flex; justify-content: space-between; gap: 12px"><span>Transcript · Lakshmi V · alumna</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">With COE for verification</span></div></div>
+<div style="padding: 10px 0; border-top: 1px solid #E6EAF0"><div style="display: flex; justify-content: space-between; gap: 12px"><span>Course completion · Suresh N</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">With COE for verification</span></div></div>
+<div style="padding: 6px 0; border-top: 1px solid #E6EAF0"><div style="display: flex; justify-content: space-between; align-items: center; gap: 12px"><span>Consolidated marksheet · Anitha J</span><button type="button" style="min-height: 44px; padding: 0 16px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Issue now</button></div></div>
+</section>
+</div>
+
+<section id="salary" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Salary calculation · inputs for October</h2>
+<p style="margin: 0 0 14px; color: #55607A; font-size: 14px">Working days come from staff in/out. Extra duties come from accepted duty alterations. Amounts are computed from your pay rules.</p>
+<div style="overflow-x: auto">
+<div style="min-width: 640px">
+<div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.4fr; gap: 12px; padding: 8px 0; font-size: 13px; font-weight: 600; color: #55607A">
+<span>Staff</span><span>Days present</span><span>Leave</span><span>Extra duties</span><span>Status</span>
+</div>
+<div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.4fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center"><span>Dr. Meena K</span><span style="font-family: 'IBM Plex Mono', monospace">6 / 6</span><span style="font-family: 'IBM Plex Mono', monospace">0</span><span style="font-family: 'IBM Plex Mono', monospace">0</span><span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Ready</span></span></div>
+<div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.4fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center"><span>Mr. Ravi T</span><span style="font-family: 'IBM Plex Mono', monospace">5 / 6</span><span style="font-family: 'IBM Plex Mono', monospace">1</span><span style="font-family: 'IBM Plex Mono', monospace">1</span><span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Ready</span></span></div>
+<div style="display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.4fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center"><span>Ms. Shalini G</span><span style="font-family: 'IBM Plex Mono', monospace">5 / 6</span><span style="font-family: 'IBM Plex Mono', monospace">0</span><span style="font-family: 'IBM Plex Mono', monospace">0</span><span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FDE2DF; color: #8A1C12">1 day has no out entry</span></span></div>
+</div>
+</div>
+</section>
+
+<section id="support" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Support desk</h2>
+<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">Student queries and staff campus issues arrive as tickets with one owner each.</p>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Lab 2 projector not working · raised by Dr. Meena K</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">Owner: maintenance · 1 day</span></div>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Bus pass renewal question · raised by Priya D</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DDE8FB; color: #1E3A8A">Owner: transport · new</span></div>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Name spelling on ID card · raised by Naveen M</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">Owner: office · 2 days</span></div>
+</section>
+</main>
+</div>
+</div>
+</body>
+</html>

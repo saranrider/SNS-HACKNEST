@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student dashboard · College Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+</style>
+</head>
+<body>
+<div style="min-height: 100vh; background: #F3F5F8; color: #14213D; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45">
+<header style="background: #14213D; color: #FFFFFF; padding: 10px 24px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column">
+<span style="font-weight: 600; font-size: 17px">College Management System</span>
+<span style="font-size: 13px; color: #C9D2E3">[Your College Name]</span>
+</div>
+<nav aria-label="Roles" style="display: flex; flex-wrap: wrap; gap: 6px">
+<a href="index.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; background: #FFFFFF; color: #14213D; text-decoration: none; font-weight: 600"><span style="width: 10px; height: 10px; border-radius: 50%; background: #1565C0"></span>Student</a>
+<a href="staff.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #66BB6A"></span>Staff</a>
+<a href="coe.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #FBC02D"></span>COE</a>
+<a href="admin.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #FB8C00"></span>Admin</a>
+<a href="alumni.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #FFFFFF; text-decoration: none; font-weight: 500"><span style="width: 10px; height: 10px; border-radius: 50%; background: #BA68C8"></span>Alumni</a>
+</nav>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 24px; max-width: 1360px; margin: 0 auto; box-sizing: border-box">
+<nav aria-label="Student modules" style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 13px; font-weight: 600; color: #55607A; padding: 0 12px 8px">STUDENT MODULES</div>
+<a href="#attendance" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Attendance follow-up</a>
+<a href="#od" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">OD requests</a>
+<a href="#nodues" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">No dues</a>
+<a href="#hallticket" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Hall ticket and performance</a>
+<a href="#assignments" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Assignment reminders</a>
+<a href="#project" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Project follow-up</a>
+<a href="#circulars" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Circulars</a>
+<a href="#query" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 6px; color: #14213D; text-decoration: none">Query</a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font-size: 26px; font-weight: 600">Student dashboard</h1>
+<p style="margin: 4px 0 0; color: #55607A">Karthik R · II MCA · Semester 3 · Sample data</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
+<div style="font-size: 13px; color: #55607A">Overall attendance</div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">74.5%</div>
+<div style="font-size: 14px; color: #8A1C12">1 period short of 75%</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
+<div style="font-size: 13px; color: #55607A">OD requests</div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">1</div>
+<div style="font-size: 14px; color: #6B4200">Waiting with HoD</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
+<div style="font-size: 13px; color: #55607A">No dues</div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 500">3 / 4</div>
+<div style="font-size: 14px; color: #6B4200">Accounts desk pending</div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 16px">
+<div style="font-size: 13px; color: #55607A">Hall ticket</div>
+<div style="font-size: 22px; font-weight: 600; padding: 6px 0 4px">On hold</div>
+<div style="font-size: 14px; color: #8A1C12">2 conditions not met</div>
+</div>
+</div>
+
+<section id="attendance" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Attendance follow-up</h2>
+<p style="margin: 0 0 14px; color: #55607A; font-size: 14px">Minimum 75% per course. The last column tells you how many periods you can still miss, or must attend.</p>
+<div style="overflow-x: auto">
+<div style="min-width: 620px">
+<div style="display: grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1.6fr; gap: 12px; padding: 8px 0; font-size: 13px; font-weight: 600; color: #55607A">
+<span>Course</span><span>Held</span><span>Attended</span><span>Percent</span><span>Shortage meter</span>
+</div>
+<div style="display: grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1.6fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center">
+<span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #55607A">MC1301</span> Data Structures</span>
+<span style="font-family: 'IBM Plex Mono', monospace">40</span>
+<span style="font-family: 'IBM Plex Mono', monospace">33</span>
+<span style="font-family: 'IBM Plex Mono', monospace">82.5%</span>
+<span><span style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Can miss 4 more</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1.6fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center">
+<span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #55607A">MC1302</span> Database Systems</span>
+<span style="font-family: 'IBM Plex Mono', monospace">42</span>
+<span style="font-family: 'IBM Plex Mono', monospace">30</span>
+<span style="font-family: 'IBM Plex Mono', monospace">71.4%</span>
+<span><span style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FDE2DF; color: #8A1C12">Attend next 6</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1.6fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center">
+<span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #55607A">MC1337</span> Digital Marketing</span>
+<span style="font-family: 'IBM Plex Mono', monospace">36</span>
+<span style="font-family: 'IBM Plex Mono', monospace">27</span>
+<span style="font-family: 'IBM Plex Mono', monospace">75.0%</span>
+<span><span style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">Cannot miss any</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1.6fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center">
+<span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #55607A">MC1304</span> Operating Systems</span>
+<span style="font-family: 'IBM Plex Mono', monospace">38</span>
+<span style="font-family: 'IBM Plex Mono', monospace">29</span>
+<span style="font-family: 'IBM Plex Mono', monospace">76.3%</span>
+<span><span style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">Cannot miss any</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1.6fr; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0; align-items: center">
+<span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #55607A">MC1305</span> Software Engineering</span>
+<span style="font-family: 'IBM Plex Mono', monospace">40</span>
+<span style="font-family: 'IBM Plex Mono', monospace">27</span>
+<span style="font-family: 'IBM Plex Mono', monospace">67.5%</span>
+<span><span style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FDE2DF; color: #8A1C12">Attend next 12</span></span>
+</div>
+</div>
+</div>
+</section>
+
+<section id="od" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start">
+<div>
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">OD request tracker</h2>
+<p style="margin: 0 0 14px; color: #55607A; font-size: 14px">Internal hackathon, 6 Oct 2026 · 6 periods missed · participant list verified by the organiser</p>
+</div>
+<button type="button" style="min-height: 44px; padding: 0 18px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">New OD request</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px">
+<div style="border: 1px solid #B7DCC4; background: #DFF3E6; color: #14532D; border-radius: 6px; padding: 10px 12px"><div style="font-size: 13px">Step 1 · Done</div><div style="font-weight: 600">Submitted</div></div>
+<div style="border: 1px solid #B7DCC4; background: #DFF3E6; color: #14532D; border-radius: 6px; padding: 10px 12px"><div style="font-size: 13px">Step 2 · Done</div><div style="font-weight: 600">Organiser verified</div></div>
+<div style="border: 1px solid #B7DCC4; background: #DFF3E6; color: #14532D; border-radius: 6px; padding: 10px 12px"><div style="font-size: 13px">Step 3 · Done</div><div style="font-weight: 600">Advisor approved</div></div>
+<div style="border: 1px solid #E8CF8A; background: #FFF1CC; color: #6B4200; border-radius: 6px; padding: 10px 12px"><div style="font-size: 13px">Step 4 · 1 day waiting</div><div style="font-weight: 600">HoD approval</div></div>
+<div style="border: 1px solid #D5DBE5; background: #F3F5F8; color: #55607A; border-radius: 6px; padding: 10px 12px"><div style="font-size: 13px">Step 5 · Automatic</div><div style="font-weight: 600">Attendance updated</div></div>
+</div>
+<p style="margin: 14px 0 0; font-size: 14px">On approval, 6 periods are marked OD and your overall attendance moves from <strong>74.5%</strong> to <strong>77.6%</strong>.</p>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
+<section id="nodues" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">No dues clearance</h2>
+<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">All desks see the request at the same time.</p>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Library</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Cleared automatically</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Laboratory</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Cleared automatically</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Hostel</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Cleared by warden</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Accounts</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">Fee balance pending</span></div>
+</section>
+
+<section id="hallticket" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Hall ticket and performance</h2>
+<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">Issued by the Controller of Examinations when both conditions are met.</p>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Attendance eligibility</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FDE2DF; color: #8A1C12">Below 75%</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>No dues</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">3 of 4 desks</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Internal assessment 1</span><span style="font-family: 'IBM Plex Mono', monospace">41 / 50</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Last semester GPA</span><span style="font-family: 'IBM Plex Mono', monospace">8.12</span></div>
+</section>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
+<section id="assignments" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 10px; font-size: 17px; font-weight: 600">Assignment reminders</h2>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>DBMS · Normalisation exercise</span><span style="color: #8A1C12; font-weight: 500">Due tomorrow</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Digital Marketing · Campaign brief</span><span style="color: #6B4200; font-weight: 500">Due 12 Oct</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Operating Systems · Scheduling lab record</span><span style="color: #55607A">Due 16 Oct</span></div>
+</section>
+
+<section id="project" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 10px; font-size: 17px; font-weight: 600">Project follow-up</h2>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Review 1 · Problem and literature</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DFF3E6; color: #14532D">Accepted</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Review 2 · Design</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #FFF1CC; color: #6B4200">Guide asked for changes</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E6EAF0"><span>Alumni mentor</span><span style="padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: #DDE8FB; color: #1E3A8A">Matched</span></div>
+</section>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px">
+<section id="circulars" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px">
+<h2 style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Circulars for you</h2>
+<p style="margin: 0 0 10px; color: #55607A; font-size: 14px">Only notices that apply to II MCA.</p>
+<div style="padding: 10px 0; border-top: 1px solid #E6EAF0"><div style="font-weight: 500">Exam fee payment</div><div style="font-size: 14px; color: #55607A">Pay at the accounts desk or online · by 15 Oct</div></div>
+<div style="padding: 10px 0; border-top: 1px solid #E6EAF0"><div style="font-weight: 500">Internal assessment 2 timetable</div><div style="font-size: 14px; color: #55607A">Starts 26 Oct · check your slots</div></div>
+<div style="padding: 10px 0; border-top: 1px solid #E6EAF0"><div style="font-weight: 500">Placement training registration</div><div style="font-size: 14px; color: #55607A">Register with the placement cell · by 20 Oct</div></div>
+</section>
+
+<section id="query" style="background: #FFFFFF; border: 1px solid #D5DBE5; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 17px; font-weight: 600">Raise a query</h2>
+<label for="qdesk" style="font-size: 14px; font-weight: 500">Send to</label>
+<select id="qdesk" style="min-height: 44px; padding: 0 10px; border: 1px solid #8A94A8; border-radius: 6px; font: inherit; background: #FFFFFF; color: #14213D"><option>Support desk</option><option>Class advisor</option><option>Accounts</option><option>Examinations</option></select>
+<label for="qtext" style="font-size: 14px; font-weight: 500">Your question</label>
+<textarea id="qtext" rows="3" style="padding: 10px; border: 1px solid #8A94A8; border-radius: 6px; font: inherit; color: #14213D; resize: vertical"></textarea>
+<button type="button" style="align-self: flex-start; min-height: 44px; padding: 0 18px; border: 0; border-radius: 6px; background: #1D4ED8; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Send query</button>
+</section>
+</div>
+</main>
+</div>
+</div>
+</body>
+</html>
