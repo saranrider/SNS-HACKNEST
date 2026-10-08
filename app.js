@@ -18,11 +18,11 @@ const DEMO_PASSWORD = "demo1234";
 const SESSION_KEY = "cms-demo-session";
 
 const accounts = [
-  { id: "devi", role: "student", name: "Devi", title: "Student", page: "student.html", about: "Attendance, OD, no dues, hall ticket" },
-  { id: "saran", role: "staff", name: "Saran", title: "Staff", page: "staff.html", about: "Approvals, attendance, question papers" },
-  { id: "brundha", role: "coe", name: "Brundha", title: "COE", page: "coe.html", about: "Syllabus, hall tickets, results" },
-  { id: "admin", role: "admin", name: "Admin", title: "Admin", page: "admin.html", about: "Fees, clearance, certificates" },
-  { id: "alumni", role: "alumni", name: "Alumni", title: "Alumni", page: "alumni.html", about: "Certificates, placement, community" },
+  { id: "devi", role: "student", name: "Devi", title: "Student", page: "student.html", about: "Attendance, OD, no dues, hall ticket", image: "images/student.svg" },
+  { id: "saran", role: "staff", name: "Saran", title: "Staff", page: "staff.html", about: "Approvals, attendance, question papers", image: "images/staff.svg" },
+  { id: "brundha", role: "coe", name: "Brundha", title: "COE", page: "coe.html", about: "Syllabus, hall tickets, results", image: "images/coe.svg" },
+  { id: "admin", role: "admin", name: "Admin", title: "Admin", page: "admin.html", about: "Fees, clearance, certificates", image: "images/admin.svg" },
+  { id: "alumni", role: "alumni", name: "Alumni", title: "Alumni", page: "alumni.html", about: "Certificates, placement, community", image: "images/alumni.svg" },
 ];
 
 function currentSession() {
@@ -665,7 +665,10 @@ function guardPage() {
     button.addEventListener("click", signOut);
     // "Admin · Admin" would read oddly, so the role is added only when it differs
     const label = session.name === session.title ? session.name : session.name + " · " + session.title;
-    slot.append(el("span", "session-user", label), button);
+    const avatar = el("img", "session-avatar");
+    avatar.src = accounts.find((item) => item.role === role).image;
+    avatar.alt = "";
+    slot.append(avatar, el("span", "session-user", label), button);
   }
   return true;
 }
@@ -683,7 +686,11 @@ function setUpLogin() {
     const button = el("button", "role-tile");
     button.type = "button";
     button.setAttribute("aria-pressed", "false");
+    const picture = el("img", "role-image");
+    picture.src = account.image;
+    picture.alt = ""; // decorative: the role name is right below it
     button.append(
+      picture,
       el("strong", "", account.title),
       el("span", "", account.about),
       el("span", "mono", "ID: " + account.id)

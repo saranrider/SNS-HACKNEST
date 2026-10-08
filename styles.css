@@ -1142,3 +1142,26 @@ td {
 .meter.low {
   background: #f8dcd8;
 }
+
+/* ---------- role pictures ---------- */
+
+.role-image {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 6px;
+  padding: 11px;
+  border-radius: 50%;
+  background: var(--blue-100);
+}
+
+.role-tile.selected .role-image {
+  background: var(--white);
+}
+
+.session-avatar {
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  border-radius: 50%;
+  background: var(--white);
+}
