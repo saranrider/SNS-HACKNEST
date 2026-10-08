@@ -242,7 +242,36 @@ function renderAttendance() {
   renderStudentStatus(record);
 }
 
-// Tiles, OD tracker, no dues and hall ticket for the student page.
+// The attendance meter is zoomed to this range so that small gaps around
+// the 75% line are visible.
+const METER_MIN = 60;
+const METER_MAX = 90;
+
+function meterPosition(attended, held) {
+  const value = (attended / held) * 100;
+  const share = ((value - METER_MIN) / (METER_MAX - METER_MIN)) * 100;
+  return Math.max(0, Math.min(100, share));
+}
+
+function renderAttendanceMeter(record) {
+  const fill = document.getElementById("att-fill");
+  const ghost = document.getElementById("att-ghost");
+  if (!fill || !ghost) return;
+
+  const current = meterPosition(record.attended, record.held);
+  fill.style.width = current + "%";
+  fill.classList.toggle("low", !record.attendanceOk);
+
+  // The striped part shows what a pending OD request would add.
+  ghost.hidden = record.odApproved;
+  if (!record.odApproved) {
+    const after = meterPosition(record.attended + record.odPeriods, record.held);
+    ghost.style.left = current + "%";
+    ghost.style.width = after - current + "%";
+  }
+}
+
+// Readiness panel, OD tracker, no dues and hall ticket for the student page.
 function renderStudentStatus(record) {
   const now = percent(record.attended, record.held);
   const short = Math.ceil(MIN_ATTENDANCE * record.held - record.attended);
@@ -257,8 +286,7 @@ function renderStudentStatus(record) {
   }
 
   if (record.odApproved) {
-    setText("od-count", 0);
-    setStatus("od-hint", "hint", "", "Approved · attendance updated");
+    setStatus("od-hint", "hint", "", "OD approved · " + record.odPeriods + " periods credited");
     setStatus("step-approval", "", "done");
     setStatus("step-updated", "", "done");
     setText("step-approval-label", "Step 3 · Done");
@@ -269,8 +297,7 @@ function renderStudentStatus(record) {
     );
   } else {
     const after = percent(record.attended + record.odPeriods, record.held);
-    setText("od-count", 1);
-    setStatus("od-hint", "hint", "wait", "Waiting with staff");
+    setStatus("od-hint", "hint", "wait", "OD request waiting with staff · would take you to " + after);
     setStatus("step-approval", "", "current");
     setStatus("step-updated", "", "");
     setText("step-approval-label", "Step 3 · 1 day waiting");
@@ -282,7 +309,10 @@ function renderStudentStatus(record) {
     );
   }
 
+  renderAttendanceMeter(record);
+
   setText("dues-count", record.desksCleared + " / " + DESK_COUNT);
+  setStatus("desk-accounts", "", duesDone ? "cleared" : "");
   setStatus("dues-hint", "hint", duesDone ? "" : "wait", duesDone ? "All desks cleared" : "Accounts desk pending");
   setStatus("accounts-pill", "pill", duesDone ? "ok" : "wait", duesDone ? "Cleared on payment" : "Fee balance pending");
 
@@ -290,6 +320,14 @@ function renderStudentStatus(record) {
   setStatus("ht-dues", "pill", duesDone ? "ok" : "wait", desksText);
 
   const blocked = (record.attendanceOk ? 0 : 1) + (duesDone ? 0 : 1);
+  const lines = [
+    "You are clear. Your hall ticket is ready to issue.",
+    "One thing stands between you and your hall ticket.",
+    "Two things stand between you and your hall ticket.",
+  ];
+  setText("hero-line", lines[blocked]);
+  setStatus("ticket", "ticket", blocked === 0 ? "ready" : "");
+
   if (blocked === 0) {
     setText("ht-status", "Ready to issue");
     setStatus("ht-hint", "hint", "", "Both conditions met");

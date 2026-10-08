@@ -25,6 +25,7 @@ Actions are saved in the browser (`localStorage`) and read by every page, so one
 ## What works
 
 - The top bar switches between roles.
+- Student: the readiness panel at the top shows the two conditions for the hall ticket (attendance against the 75% line, and the four no-dues desks) and the ticket itself, which fills in once both are met.
 - Student: the attendance table and shortage meter are calculated in `app.js` from the `courses` array, using the 75% rule.
 - Student: Project follow-up compares a new proposal (title, abstract, graphical abstract) with the `pastProjects` array. A match unlocks the earlier project's files and the student continues it; otherwise it is registered as new. Matching is on title and abstract keywords; the image is attached but not compared yet.
 - Staff: the Approve button on OD requests updates the row and the waiting count. The blueprint bars are drawn from the `blueprint` object.

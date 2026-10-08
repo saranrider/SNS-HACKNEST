@@ -42,28 +42,47 @@
         <p>Karthik R · II MCA · Semester 3 · Sample data</p>
       </div>
 
-      <div class="stats">
-        <div class="stat">
-          <div class="label">Overall attendance</div>
-          <div class="value" id="overall-attendance">-</div>
-          <div class="hint stop" id="overall-hint"></div>
+      <section class="card readiness" aria-label="Hall ticket readiness">
+        <div class="readiness-gates">
+          <p class="readiness-line" id="hero-line"></p>
+
+          <div class="gate">
+            <div class="gate-head">
+              <span class="gate-name">Attendance</span>
+              <span class="gate-value mono" id="overall-attendance">-</span>
+            </div>
+            <div class="meter" aria-hidden="true">
+              <span class="meter-fill" id="att-fill"></span>
+              <span class="meter-ghost" id="att-ghost"></span>
+              <span class="meter-mark"></span>
+            </div>
+            <div class="meter-scale" aria-hidden="true"><span>60%</span><span>75% needed</span><span>90%</span></div>
+            <div class="hint" id="overall-hint"></div>
+            <div class="hint" id="od-hint"></div>
+          </div>
+
+          <div class="gate">
+            <div class="gate-head">
+              <span class="gate-name">No dues</span>
+              <span class="gate-value mono" id="dues-count">-</span>
+            </div>
+            <ol class="desks">
+              <li class="cleared">Library</li>
+              <li class="cleared">Laboratory</li>
+              <li class="cleared">Hostel</li>
+              <li id="desk-accounts">Accounts</li>
+            </ol>
+            <div class="hint" id="dues-hint"></div>
+          </div>
         </div>
-        <div class="stat">
-          <div class="label">OD requests</div>
-          <div class="value" id="od-count">-</div>
-          <div class="hint" id="od-hint"></div>
+
+        <div class="ticket" id="ticket">
+          <span class="ticket-label">Hall ticket</span>
+          <strong class="ticket-status" id="ht-status">-</strong>
+          <span class="hint" id="ht-hint"></span>
+          <span class="ticket-foot">Karthik R · II MCA<br>End semester examination</span>
         </div>
-        <div class="stat">
-          <div class="label">No dues</div>
-          <div class="value" id="dues-count">-</div>
-          <div class="hint" id="dues-hint"></div>
-        </div>
-        <div class="stat">
-          <div class="label">Hall ticket</div>
-          <div class="value words" id="ht-status">-</div>
-          <div class="hint" id="ht-hint"></div>
-        </div>
-      </div>
+      </section>
 
       <section class="card" id="attendance">
         <h2>Attendance follow-up</h2>
