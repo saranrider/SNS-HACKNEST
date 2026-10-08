@@ -14,6 +14,7 @@ Static, clickable screens for the five roles in our workflow diagram. Open `inde
 | `coe.html` | Controller of Examinations dashboard |
 | `admin.html` | Admin and Support dashboard |
 | `alumni.html` | Alumni dashboard |
+| `split.html` | Two dashboards side by side, each with role tabs |
 | `styles.css` | Shared blue and white theme |
 | `app.js` | Sample data and page logic |
 
@@ -30,6 +31,10 @@ Use a demo account. The password for all of them is `demo1234`.
 | Alumni | `alumni` |
 
 Each dashboard opens only for its own role; anyone else is sent back to the sign-in page. This is a demonstration of the flow, not real security: the check runs in the browser and the password is in `app.js`. A real version needs a server to verify credentials.
+
+## Side-by-side view
+
+`split.html` shows two dashboards next to each other, each with tabs to pick the role. An action in one pane refreshes the other, so approving an OD request as Staff on the left changes the Student page on the right straight away. It opens without signing in, as a presenter view for the demo; it is linked from the sign-in page.
 
 ## The pages are connected
 

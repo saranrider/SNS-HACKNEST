@@ -59,6 +59,20 @@ function saveState(state) {
   } catch (error) {
     // the page still works for this visit, it just will not carry over
   }
+  notifySplitView();
+}
+
+// A dashboard shown inside the side-by-side view is loaded with ?embed=split.
+function isEmbedded() {
+  return new URLSearchParams(window.location.search).get("embed") === "split";
+}
+
+// Tells the side-by-side view that something changed, so it can refresh
+// the dashboard in the other pane.
+function notifySplitView() {
+  if (window.parent !== window) {
+    window.parent.postMessage("cms-state-changed", "*");
+  }
 }
 
 // Sample records. Replace with data from the college's timetable and
@@ -643,13 +657,23 @@ function guardPage() {
   const role = document.body.dataset.role;
   if (!role) return true;
 
+  const slot = document.getElementById("session");
+
+  // The side-by-side presenter view shows a dashboard without signing in,
+  // as the demo account for that role. It has no Sign out button.
+  if (isEmbedded()) {
+    const account = accounts.find((item) => item.role === role);
+    document.body.classList.add("embedded");
+    if (slot) slot.append(el("span", "session-user", account.name + " · " + account.title));
+    return true;
+  }
+
   const session = currentSession();
   if (!session || session.role !== role) {
     window.location.replace("index.html");
     return false;
   }
 
-  const slot = document.getElementById("session");
   if (slot) {
     const button = el("button", "btn outline", "Sign out");
     button.type = "button";
@@ -706,6 +730,53 @@ function setUpLogin() {
   });
 }
 
+/* ---------- side-by-side view ---------- */
+
+// Two panes, each with a row of role tabs and a frame showing that role's
+// dashboard. An action in one pane reloads the other so the effect shows.
+function setUpSplitView() {
+  const panes = document.querySelectorAll(".pane");
+  if (panes.length === 0) return;
+
+  const frames = [];
+
+  panes.forEach((pane) => {
+    const tabs = pane.querySelector(".pane-tabs");
+    const frame = pane.querySelector("iframe");
+    frames.push(frame);
+
+    const show = (account) => {
+      frame.src = account.page + "?embed=split";
+      tabs.querySelectorAll("button").forEach((button) => {
+        const active = button.dataset.role === account.role;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", active);
+      });
+    };
+
+    accounts.forEach((account) => {
+      const button = el("button", "", account.title);
+      button.type = "button";
+      button.dataset.role = account.role;
+      button.setAttribute("role", "tab");
+      button.addEventListener("click", () => show(account));
+      tabs.append(button);
+    });
+
+    show(accounts.find((account) => account.role === pane.dataset.start));
+  });
+
+  window.addEventListener("message", (event) => {
+    if (event.data !== "cms-state-changed") return;
+    frames.forEach((frame) => {
+      // only our own frames can trigger a refresh, and the sender is skipped
+      if (frame.contentWindow !== event.source && frames.some((f) => f.contentWindow === event.source)) {
+        frame.src = frame.src;
+      }
+    });
+  });
+}
+
 function setUpReset() {
   const button = document.getElementById("reset-demo");
   if (!button) return;
@@ -715,6 +786,7 @@ function setUpReset() {
     } catch (error) {
       // nothing stored, nothing to clear
     }
+    notifySplitView();
     window.location.reload();
   });
 }
@@ -722,6 +794,7 @@ function setUpReset() {
 document.addEventListener("DOMContentLoaded", () => {
   if (!guardPage()) return;
   setUpLogin();
+  setUpSplitView();
   setUpReset();
   renderFees();
   renderHallTickets();
