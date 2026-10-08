@@ -1175,3 +1175,16 @@ td {
 [hidden] {
   display: none !important;
 }
+
+/* ---------- request forms opened from a button ---------- */
+.request-form {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--blue-50);
+}
+
+.request-form .text-stop {
+  margin: 0;
+}

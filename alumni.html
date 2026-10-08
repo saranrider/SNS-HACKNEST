@@ -40,7 +40,7 @@
             <h2>Certificate request tracker</h2>
             <p class="sub">Transcript · requested 5 Oct 2026 · no visit to campus needed</p>
           </div>
-          <button type="button" class="btn" data-followup="admin#certificates">New certificate request</button>
+          <button type="button" class="btn" data-request="certificate" data-ask="Which certificate" data-options="Transcript|Bonafide|Course completion|Consolidated marksheet" data-send="Send to admin desk">New certificate request</button>
         </div>
         <ol class="steps">
           <li class="done"><small>Step 1 · Done</small><strong>Request raised</strong></li>
@@ -50,6 +50,7 @@
           <li><small>Step 5</small><strong>Download with QR</strong></li>
         </ol>
         <p class="note">Anyone who receives the certificate can scan its QR code to confirm it is genuine.</p>
+        <div data-my-requests="certificate" aria-live="polite"></div>
       </section>
 
       <div class="grid-2">
@@ -59,9 +60,10 @@
           <div class="row"><span>Referral posted · Junior developer</span><span class="pill" data-followup="student#project-reviews">7 students applied</span></div>
           <div class="row"><span>Project mentoring · II MCA batch 4</span><span class="pill ok">Active</span></div>
           <div class="actions">
-            <button type="button" class="btn outline" data-followup="student#project-reviews">Post a referral</button>
-            <button type="button" class="btn outline" data-followup="student#project-reviews">Offer mentoring</button>
+            <button type="button" class="btn outline" data-request="referral" data-ask="Role, company and city" data-send="Send for publishing">Post a referral</button>
+            <button type="button" class="btn outline" data-request="mentoring" data-ask="Topic and the hours you can give" data-send="Send for publishing">Offer mentoring</button>
           </div>
+          <div data-my-requests="referral mentoring" aria-live="polite"></div>
         </section>
 
         <section class="card" id="news">
@@ -79,8 +81,9 @@
           <form class="form">
             <label for="alumni-search">Search alumni</label>
             <input id="alumni-search" type="search">
-            <button type="button" class="btn">Search</button>
+            <button type="button" class="btn" id="alumni-search-go">Search</button>
           </form>
+          <div id="alumni-results" aria-live="polite"></div>
           <div class="row" style="margin-top: 12px"><span>MCA 2022 batch group</span><span class="muted">3 new posts</span></div>
           <div class="row"><span>Chennai chapter</span><span class="muted">1 new post</span></div>
         </section>
@@ -92,8 +95,9 @@
           <div class="row"><span>Training and coaching</span><span class="mono">[COUNT]</span></div>
           <div class="row"><span>Other trades</span><span class="mono">[COUNT]</span></div>
           <div class="actions">
-            <button type="button" class="btn outline">List your business</button>
+            <button type="button" class="btn outline" data-request="business" data-ask="Business name, trade and city" data-send="Send for listing">List your business</button>
           </div>
+          <div data-my-requests="business" aria-live="polite"></div>
         </section>
       </div>
 
@@ -103,8 +107,9 @@
             <h2>Your record in the alumni database</h2>
             <p class="sub">Carried over from your student record on graduation. Keeping it current gives the college the outcome data that NBA and NAAC ask for.</p>
           </div>
-          <button type="button" class="btn outline">Update details</button>
+          <button type="button" class="btn outline" data-request="profile" data-ask="What has changed (employer, city, higher studies)" data-send="Send to the office">Update details</button>
         </div>
+        <div data-my-requests="profile" aria-live="polite"></div>
         <div class="facts">
           <div class="row"><span class="muted">Programme</span><span>MCA, 2020 to 2022</span></div>
           <div class="row"><span class="muted">Current status</span><span>Employed</span></div>

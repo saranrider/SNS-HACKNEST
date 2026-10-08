@@ -97,7 +97,7 @@
             <h2>OD request tracker</h2>
             <p class="sub">Internal hackathon, 6 Oct 2026 · 6 periods missed · participant list verified by the organiser</p>
           </div>
-          <button type="button" class="btn" data-followup="staff#od">New OD request</button>
+          <button type="button" class="btn" data-request="od" data-ask="Event, date and periods missed" data-send="Send to class advisor">New OD request</button>
         </div>
         <ol class="steps">
           <li class="done"><small>Step 1 · Done</small><strong>Submitted</strong></li>
@@ -106,6 +106,7 @@
           <li id="step-updated"><small id="step-updated-label">Step 4</small><strong>Attendance updated</strong></li>
         </ol>
         <p class="note" id="od-note"></p>
+        <div data-my-requests="od" aria-live="polite"></div>
       </section>
 
       <div class="grid-2">

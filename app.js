@@ -138,6 +138,7 @@ async function sendAction(path, body) {
       // the next poll will bring it in
     }
     renderTickets();
+    renderRequests();
     renderNotifications();
     return;
   }
@@ -146,13 +147,39 @@ async function sendAction(path, body) {
   window.location.reload();
 }
 
+// True while the person is in the middle of writing something a reload
+// would throw away: the cursor is in a field, or a field has unsent text.
+function midEntry() {
+  const active = document.activeElement;
+  if (active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName)) return true;
+  return Array.from(document.querySelectorAll("input[type=text], input[type=search], textarea")).some(
+    (field) => field.offsetParent !== null && field.value !== field.defaultValue
+  );
+}
+
+// Shows a change made by someone else. Normally the page reloads; if that
+// would lose what is being typed, the parts that can be redrawn in place
+// are, and the reload waits until the person has finished.
+let reloadWaiting = false;
+function showChange() {
+  if (!midEntry()) {
+    window.location.reload();
+    return;
+  }
+  reloadWaiting = true;
+  renderTickets();
+  renderRequests();
+  renderApprovals();
+  renderHallTickets();
+  renderOverview();
+  renderNotifications();
+}
+
 // Picks up changes made on other devices.
 function startPolling() {
   setInterval(async () => {
-    const tag = document.activeElement ? document.activeElement.tagName : "";
-    const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
-    if (typing || actionsInFlight > 0) return;
-    if (await pullState()) window.location.reload();
+    if (actionsInFlight > 0) return;
+    if ((await pullState()) || reloadWaiting) showChange();
   }, POLL_MS);
 }
 
@@ -173,7 +200,7 @@ function recordStore() {
 }
 
 function loadState() {
-  const state = { odApproved: [], feePaid: false, tickets: [], decisions: [], notifications: [] };
+  const state = { odApproved: [], feePaid: false, tickets: [], requests: [], decisions: [], notifications: [] };
   try {
     Object.assign(state, JSON.parse(recordStore().getItem(STORE_KEY)) || {});
   } catch (error) {
@@ -632,6 +659,9 @@ function renderOdApprovals() {
       const button = el("button", "btn", "Approve");
       button.type = "button";
       button.addEventListener("click", () => {
+        // read again: other roles may have acted since this row was drawn
+        const state = loadState();
+        if (state.odApproved.includes(request.student)) return;
         state.odApproved.push(request.student);
         if (request.student === DEMO_STUDENT) {
           addNote(state, "student", "Your OD request was approved by " + currentUserName() + ". Your attendance has been updated.");
@@ -730,6 +760,7 @@ function renderFees() {
   const button = el("button", "btn outline", "Record payment");
   button.type = "button";
   button.addEventListener("click", () => {
+    const state = loadState(); // read again: other roles may have acted since
     state.feePaid = true;
     addNote(state, "student", "Your fee payment was recorded. The accounts desk has cleared your dues.");
     noteIfReady(state);
@@ -1290,6 +1321,7 @@ const approvals = {
   "cert.anitha.issue": [],
   "hallticket.devi": [["student", "Your hall ticket has been issued by the COE."]],
   "project.devi": [["student", "Saran accepted your proposal. You can continue the 2024 face recognition attendance project."]],
+  "attendance.p5": [],
   "fees.remind": [["student", "Reminder from the accounts desk: your exam fee is due and is holding your hall ticket."]],
 };
 
@@ -1367,6 +1399,202 @@ function renderApprovals() {
   }
 }
 
+/* ---------- requests from one role to another ---------- */
+
+// The server holds the same list and is the one that counts.
+const requestKinds = {
+  od: { to: "staff", label: "OD request", accepted: "approved", accept: "Approve" },
+  duty: { to: "admin", label: "Duty change", accepted: "approved", accept: "Approve" },
+  certificate: { to: "admin", label: "Certificate request", accepted: "issued", accept: "Issue" },
+  referral: { to: "admin", label: "Job referral", accepted: "published", accept: "Publish", announce: "student" },
+  mentoring: { to: "admin", label: "Mentoring offer", accepted: "published", accept: "Publish", announce: "student" },
+  business: { to: "admin", label: "Business listing", accepted: "listed", accept: "List" },
+  profile: { to: "admin", label: "Record update", accepted: "updated", accept: "Update record" },
+};
+
+function addRequest(kind, text) {
+  const rule = requestKinds[kind];
+  const state = loadState();
+  state.requests.push({ id: "local-" + Date.now(), kind, text, fromName: currentUserName(), toRole: rule.to, status: "open" });
+  addNote(state, rule.to, "New " + rule.label.toLowerCase() + " from " + currentUserName() + ": " + text);
+  saveState(state);
+  sendAction("/api/requests", { kind, text });
+}
+
+function acceptRequest(id) {
+  const state = loadState();
+  const request = state.requests.find((item) => item.id === id);
+  if (!request || request.status !== "open") return;
+  const rule = requestKinds[request.kind];
+  request.status = "accepted";
+  const sender = accounts.find((item) => item.name === request.fromName);
+  if (sender) {
+    addNote(state, sender.role, "Your " + rule.label.toLowerCase() + " was " + rule.accepted + " by " + currentUserName() + ": " + request.text);
+  }
+  if (rule.announce) {
+    addNote(state, rule.announce, "New from the alumni network (" + rule.label.toLowerCase() + "): " + request.text);
+  }
+  saveState(state);
+  sendAction("/api/requests/accept", { id });
+}
+
+// <button data-request="kind"> opens a short form under its card heading.
+// data-options="A|B" asks with a list instead of a text box.
+function setUpRequestForms() {
+  document.querySelectorAll("[data-request]").forEach((button) => {
+    if (button.dataset.ready) return;
+    button.dataset.ready = "yes";
+    const kind = button.dataset.request;
+
+    const form = el("form", "form request-form");
+    form.hidden = true;
+    const fieldId = "request-" + kind;
+    const label = el("label", "", button.dataset.ask);
+    label.htmlFor = fieldId;
+    let field;
+    if (button.dataset.options) {
+      field = el("select");
+      button.dataset.options.split("|").forEach((option) => field.append(el("option", "", option)));
+    } else {
+      field = el("input");
+      field.type = "text";
+      field.maxLength = 300;
+    }
+    field.id = fieldId;
+    const send = el("button", "btn", button.dataset.send || "Send");
+    send.type = "submit";
+    const problem = el("p", "text-stop");
+    problem.setAttribute("role", "alert");
+    form.append(label, field, send, problem);
+
+    // the form sits under the heading row or button row the button is in
+    const holder = button.closest(".card-head, .actions, .row") || button;
+    holder.after(form);
+
+    button.setAttribute("aria-expanded", "false");
+    button.addEventListener("click", () => {
+      form.hidden = !form.hidden;
+      button.setAttribute("aria-expanded", String(!form.hidden));
+      if (!form.hidden) field.focus();
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const typed = field.value.trim();
+      if (typed.length < 3) {
+        problem.textContent = "Write a few words so the other person knows what you are asking for.";
+        field.focus();
+        return;
+      }
+      problem.textContent = "";
+      addRequest(kind, (button.dataset.prefix || "") + typed);
+      if (field.tagName === "INPUT") field.value = "";
+      form.hidden = true;
+      button.setAttribute("aria-expanded", "false");
+      renderRequests();
+    });
+  });
+}
+
+// data-my-requests="kinds" lists what this person has asked for;
+// data-inbox="kinds" lists what is waiting for this role to accept.
+function renderRequests() {
+  const role = document.body.dataset.role;
+  const requests = loadState().requests;
+
+  document.querySelectorAll("[data-my-requests]").forEach((box) => {
+    const kinds = box.dataset.myRequests.split(" ");
+    const mine = requests.filter((item) => kinds.includes(item.kind) && item.fromName === currentUserName());
+    box.replaceChildren();
+    mine.forEach((item) => {
+      const rule = requestKinds[item.kind];
+      const target = accounts.find((account) => account.role === rule.to).title;
+      const row = el("div", "row wrap");
+      const label = el("span", "", item.text);
+      label.append(el("span", "detail", rule.label + " · sent to " + target));
+      const open = item.status === "open";
+      const done = rule.accepted.charAt(0).toUpperCase() + rule.accepted.slice(1);
+      row.append(label, el("span", "pill " + (open ? "wait" : "ok"), open ? "Waiting for " + target : done));
+      box.append(row);
+    });
+  });
+
+  document.querySelectorAll("[data-inbox]").forEach((box) => {
+    const kinds = box.dataset.inbox.split(" ");
+    const waiting = requests.filter((item) => kinds.includes(item.kind) && item.toRole === role);
+    box.replaceChildren();
+    waiting.forEach((item) => {
+      const rule = requestKinds[item.kind];
+      const row = el("div", "row wrap");
+      const label = el("span", "", item.text);
+      label.append(el("span", "detail", rule.label + " · from " + item.fromName));
+      row.append(label);
+      if (item.status === "open") {
+        const button = el("button", "btn", rule.accept);
+        button.type = "button";
+        button.addEventListener("click", () => {
+          acceptRequest(item.id);
+          renderRequests();
+        });
+        row.append(button);
+      } else {
+        const done = rule.accepted.charAt(0).toUpperCase() + rule.accepted.slice(1);
+        row.append(el("span", "pill ok", done + " · " + item.fromName + " notified"));
+      }
+      box.append(row);
+    });
+  });
+}
+
+/* ---------- alumni: directory search ---------- */
+
+const alumniDirectory = [
+  { name: "Lakshmi V", batch: "MCA 2022", city: "Chennai", field: "Software testing" },
+  { name: "Karthik R", batch: "MCA 2022", city: "Bengaluru", field: "Data engineering" },
+  { name: "Meena S", batch: "MCA 2021", city: "Coimbatore", field: "Web development" },
+  { name: "Suresh N", batch: "MCA 2025", city: "Madurai", field: "Higher studies" },
+  { name: "Anitha J", batch: "MCA 2020", city: "Chennai", field: "Training and coaching" },
+  { name: "Imran K", batch: "MCA 2021", city: "Dindigul", field: "Software services" },
+];
+
+function setUpAlumniSearch() {
+  const button = document.getElementById("alumni-search-go");
+  if (!button) return;
+  const input = document.getElementById("alumni-search");
+  const results = document.getElementById("alumni-results");
+
+  const search = () => {
+    const wanted = input.value.trim().toLowerCase();
+    results.replaceChildren();
+    if (!wanted) {
+      results.append(el("p", "note muted", "Type a name, batch year, city or field of work."));
+      return;
+    }
+    const found = alumniDirectory.filter((person) =>
+      (person.name + " " + person.batch + " " + person.city + " " + person.field).toLowerCase().includes(wanted)
+    );
+    if (found.length === 0) {
+      results.append(el("p", "note muted", "Nobody matches \u201C" + input.value.trim() + "\u201D. Try a city or a batch year."));
+      return;
+    }
+    found.forEach((person) => {
+      const row = el("div", "row");
+      const label = el("span", "", person.name);
+      label.append(el("span", "detail", person.batch + " · " + person.city));
+      row.append(label, el("span", "muted", person.field));
+      results.append(row);
+    });
+  };
+
+  button.addEventListener("click", search);
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      search();
+    }
+  });
+}
+
 /* ---------- who handles the next step ---------- */
 
 // An element marked data-followup="role#section" is waiting on another
@@ -1412,11 +1640,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderOverview();
   setUpFollowUps();
   renderApprovals();
+  setUpRequestForms();
+  renderRequests();
+  setUpAlumniSearch();
   renderNotifications();
 
   // without a server, another tab of this browser may act: pick that up at once
   window.addEventListener("storage", (event) => {
-    if (!backendOnline && event.key === STORE_KEY) window.location.reload();
+    if (!backendOnline && event.key === STORE_KEY) showChange();
   });
   setUpTicketForm("query-send", "query-text", () => document.getElementById("query-desk").value);
   setUpTicketForm("issue-send", "issue-text", () => "Support desk");
