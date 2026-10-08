@@ -61,7 +61,7 @@ test("only staff can approve an OD, and every role then sees it", async () => {
   assert.deepEqual(approved.body.odApproved, ["Devi"]);
 
   const seen = await api.call("GET", "/api/state", null, student);
-  assert.deepEqual(seen.body, { odApproved: ["Devi"], feePaid: false });
+  assert.deepEqual(seen.body, { odApproved: ["Devi"], feePaid: false, tickets: [] });
   api.stop();
 });
 
@@ -86,7 +86,42 @@ test("reset puts the records back and keeps the users", async () => {
   const staff = await api.login("saran");
   await api.call("POST", "/api/od/approve", { student: "Devi" }, staff);
   const reset = await api.call("POST", "/api/reset", null, staff);
-  assert.deepEqual(reset.body, { odApproved: [], feePaid: false });
+  assert.deepEqual(reset.body, { odApproved: [], feePaid: false, tickets: [] });
   assert.ok(await api.login("saran"));
+  api.stop();
+});
+
+test("a student raises a query, the admin sees it and only the admin can close it", async () => {
+  const api = await start();
+  const student = await api.login("devi");
+  const admin = await api.login("admin");
+
+  const tooShort = await api.call("POST", "/api/tickets", { text: "a" }, student);
+  assert.equal(tooShort.status, 400);
+
+  const raised = await api.call("POST", "/api/tickets", { text: "Bus pass renewal date?", owner: "Accounts" }, student);
+  assert.equal(raised.status, 201);
+  const ticket = raised.body.tickets[0];
+  assert.equal(ticket.raisedBy, "Devi");
+  assert.equal(ticket.owner, "Accounts");
+  assert.equal(ticket.status, "open");
+
+  const seen = await api.call("GET", "/api/state", null, admin);
+  assert.equal(seen.body.tickets.length, 1);
+
+  assert.equal((await api.call("POST", "/api/tickets/close", { id: ticket.id }, student)).status, 403);
+  const closed = await api.call("POST", "/api/tickets/close", { id: ticket.id }, admin);
+  assert.equal(closed.body.tickets[0].status, "closed");
+  api.stop();
+});
+
+test("records come from the server and need a sign-in", async () => {
+  const api = await start();
+  assert.equal((await api.call("GET", "/api/records")).status, 401);
+  const staff = await api.login("saran");
+  const records = await api.call("GET", "/api/records", null, staff);
+  assert.equal(records.body.courses.length, 5);
+  assert.equal(records.body.odRequests[0].student, "Devi");
+  assert.equal(records.body.desks.length, 4);
   api.stop();
 });

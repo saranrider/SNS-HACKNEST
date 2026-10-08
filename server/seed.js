@@ -15,11 +15,33 @@ function makeUser(id, role, name, title) {
 
 function seedRecords() {
   return {
-    odRequests: [
-      { student: "Devi", event: "Internal hackathon · 6 Oct", periods: 6, status: "pending" },
-      { student: "Divya S", event: "Zonal volleyball · 5 Oct", periods: 7, status: "pending" },
-      { student: "Arun P", event: "Placement drive · 7 Oct", periods: 4, status: "pending" },
+    courses: [
+      { code: "MC1301", name: "Data Structures", held: 40, attended: 33 },
+      { code: "MC1302", name: "Database Systems", held: 42, attended: 30 },
+      { code: "MC1337", name: "Digital Marketing", held: 36, attended: 27 },
+      { code: "MC1304", name: "Operating Systems", held: 38, attended: 29 },
+      { code: "MC1305", name: "Software Engineering", held: 40, attended: 27 },
     ],
+    odRequests: [
+      {
+        student: "Devi",
+        event: "Internal hackathon · 6 Oct",
+        periods: 6,
+        attended: 146,
+        held: 196,
+        byCourse: { MC1302: 3, MC1305: 3 },
+        status: "pending",
+      },
+      { student: "Divya S", event: "Zonal volleyball · 5 Oct", periods: 7, attended: 150, held: 196, status: "pending" },
+      { student: "Arun P", event: "Placement drive · 7 Oct", periods: 4, attended: 158, held: 196, status: "pending" },
+    ],
+    desks: [
+      { name: "Library", autoCleared: 41, open: 2, waitDays: 0.4 },
+      { name: "Laboratory", autoCleared: 44, open: 1, waitDays: 0.3 },
+      { name: "Hostel", autoCleared: 18, open: 3, waitDays: 1.2 },
+      { name: "Accounts", autoCleared: 36, open: 6, waitDays: 2.6 },
+    ],
+    tickets: [],
     fees: [
       { student: "Devi", item: "Exam fee", status: "due" },
       { student: "Priya D", item: "Second instalment", status: "due" },

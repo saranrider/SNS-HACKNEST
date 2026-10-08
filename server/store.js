@@ -2,13 +2,18 @@
 // Good enough for a demo; swap for Postgres or SQLite before real use.
 const fs = require("node:fs");
 const path = require("node:path");
-const { seedDatabase } = require("./seed");
+const { seedDatabase, seedRecords } = require("./seed");
 
 function createStore(file) {
   let data;
 
   if (file && fs.existsSync(file)) {
     data = JSON.parse(fs.readFileSync(file, "utf8"));
+    // a file written by an older version may lack newer kinds of record
+    const fresh = seedRecords();
+    for (const key of Object.keys(fresh)) {
+      if (!(key in data)) data[key] = fresh[key];
+    }
   } else {
     data = seedDatabase();
   }

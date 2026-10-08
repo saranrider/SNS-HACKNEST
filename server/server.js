@@ -8,6 +8,7 @@ const { createStore } = require("./store");
 const { seedRecords, hashPassword } = require("./seed");
 
 const SESSION_HOURS = 8;
+const TICKET_OWNERS = ["Support desk", "Class advisor", "Accounts", "Examinations"];
 const MAX_FAILED_LOGINS = 5;
 const LOCK_SECONDS = 60;
 
@@ -42,6 +43,7 @@ function createApp(store) {
     return {
       odApproved: db.odRequests.filter((r) => r.status === "approved").map((r) => r.student),
       feePaid: demoFee.status === "paid",
+      tickets: db.tickets,
     };
   }
 
@@ -131,6 +133,43 @@ function createApp(store) {
       record(req.user, "fee.pay", fee.student);
       store.save();
     }
+    res.json(publicState());
+  });
+
+  // The records the dashboards draw from.
+  app.get("/api/records", requireUser, (req, res) => {
+    res.json({ courses: db.courses, odRequests: db.odRequests, desks: db.desks });
+  });
+
+  // A student's query or a staff member's campus issue.
+  app.post("/api/tickets", requireUser, (req, res) => {
+    const text = String((req.body && req.body.text) || "").trim();
+    if (text.length < 3 || text.length > 300) {
+      return res.status(400).json({ error: "Write between 3 and 300 characters." });
+    }
+    const asked = req.body && req.body.owner;
+    const owner = TICKET_OWNERS.includes(asked) ? asked : TICKET_OWNERS[0];
+    const ticket = {
+      id: crypto.randomUUID().slice(0, 8),
+      text,
+      owner,
+      raisedBy: req.user.name,
+      status: "open",
+      raisedAt: new Date().toISOString(),
+    };
+    db.tickets.push(ticket);
+    record(req.user, "ticket.raise", ticket.id);
+    store.save();
+    res.status(201).json(publicState());
+  });
+
+  app.post("/api/tickets/close", requireUser, requireRole("admin"), (req, res) => {
+    const ticket = db.tickets.find((item) => item.id === (req.body && req.body.id));
+    if (!ticket) return res.status(404).json({ error: "No ticket with that ID." });
+    ticket.status = "closed";
+    ticket.closedBy = req.user.id;
+    record(req.user, "ticket.close", ticket.id);
+    store.save();
     res.json(publicState());
   });
 

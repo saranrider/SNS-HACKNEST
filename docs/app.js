@@ -136,6 +136,19 @@ async function pullState() {
   return changed;
 }
 
+// The records the pages draw from. With a server they come from its
+// database; without one, the sample values further down this file are used.
+async function pullRecords() {
+  const response = await api("GET", "/api/records");
+  if (!response.ok) return;
+  const replace = (target, fresh) => {
+    if (Array.isArray(fresh)) target.splice(0, target.length, ...fresh);
+  };
+  replace(courses, response.data.courses);
+  replace(odRequests, response.data.odRequests);
+  replace(desks, response.data.desks);
+}
+
 // Sends an action to the server. The page has already shown the result, so
 // if the server refuses, the page reloads with the server's version.
 async function sendAction(path, body) {
@@ -144,6 +157,13 @@ async function sendAction(path, body) {
   const response = await api("POST", path, body).catch(() => ({ ok: false, data: {} }));
   actionsInFlight -= 1;
   if (response.ok) {
+    // keep exactly what the server now holds, then redraw anything that lists it
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(response.data));
+    } catch (error) {
+      // the next poll will bring it in
+    }
+    renderTickets();
     notifySplitView();
     return;
   }
@@ -172,7 +192,7 @@ function showBackendStatus() {
 }
 
 function loadState() {
-  const state = { odApproved: [], feePaid: false };
+  const state = { odApproved: [], feePaid: false, tickets: [] };
   try {
     Object.assign(state, JSON.parse(localStorage.getItem(STORE_KEY)) || {});
   } catch (error) {
@@ -1104,13 +1124,20 @@ function adminOverview(state) {
     return { label: desk.name + " · " + open + " open", state: deskState };
   });
 
+  // the three sample tickets plus any raised through the query and issue forms
+  const raised = state.tickets.map((ticket) => ({
+    label: ticket.text + " · " + ticket.raisedBy + " · " + ticket.status,
+    state: ticket.status === "closed" ? "done" : "todo",
+  }));
+  const allTickets = officeQueues.tickets.concat(raised);
+
   return {
     line: totalOpen + " no dues requests are open, most of them at the " + mostOpen.name.toLowerCase() + " desk.",
     trackers: [
       tracker("Fee balances cleared", fees, state.feePaid ? "2 students still owe" : "Exam fee closes 15 Oct", state.feePaid ? "" : "stop"),
       tracker("No dues by desk", deskItems, mostOpen.name + " desk has the longest queue", "stop", totalOpen + " open"),
       tracker("Certificates issued", officeQueues.certificates, "2 waiting for COE", "wait"),
-      tracker("Support tickets closed", officeQueues.tickets, "3 open, each with an owner", ""),
+      tracker("Support tickets closed", allTickets, countState(allTickets, "todo") + " open, each with an owner", ""),
     ],
   };
 }
@@ -1126,6 +1153,96 @@ function renderOverview() {
   const view = build(loadState());
   setText("overview-line", view.line);
   holder.replaceChildren(...view.trackers);
+}
+
+/* ---------- queries and campus issues (support tickets) ---------- */
+
+function currentUserName() {
+  if (isEmbedded()) return accounts.find((item) => item.role === document.body.dataset.role).name;
+  const session = currentSession();
+  return session ? session.name : "";
+}
+
+// A student's query or a staff member's campus issue becomes a ticket that
+// the admin's support desk sees and closes.
+function addTicket(text, owner) {
+  const state = loadState();
+  state.tickets.push({ id: "local-" + Date.now(), text, owner, raisedBy: currentUserName(), status: "open" });
+  saveState(state);
+  sendAction("/api/tickets", { text, owner });
+}
+
+function closeTicket(id) {
+  const state = loadState();
+  const ticket = state.tickets.find((item) => item.id === id);
+  if (!ticket) return;
+  ticket.status = "closed";
+  saveState(state);
+  sendAction("/api/tickets/close", { id });
+}
+
+function setUpTicketForm(buttonId, inputId, chooseOwner) {
+  const button = document.getElementById(buttonId);
+  if (!button) return;
+  const input = document.getElementById(inputId);
+  button.addEventListener("click", () => {
+    const text = input.value.trim();
+    if (text.length < 3) {
+      input.focus();
+      return;
+    }
+    addTicket(text, chooseOwner());
+    input.value = "";
+    renderTickets();
+  });
+}
+
+function renderTickets() {
+  const tickets = loadState().tickets;
+
+  // the person who raised them sees their own, with the current status
+  const mine = document.getElementById("my-tickets");
+  if (mine) {
+    const own = tickets.filter((ticket) => ticket.raisedBy === currentUserName());
+    mine.replaceChildren();
+    own.forEach((ticket) => {
+      const row = el("div", "row wrap");
+      const label = el("span", "", ticket.text);
+      label.append(el("span", "detail", "Sent to " + ticket.owner));
+      const open = ticket.status !== "closed";
+      row.append(label, el("span", "pill " + (open ? "wait" : "ok"), open ? "Open" : "Closed"));
+      mine.append(row);
+    });
+    if (own.length > 0) {
+      mine.append(followUpLink("admin#support", "See it at the support desk"));
+      setUpFollowUps(mine);
+    }
+  }
+
+  // the support desk sees every ticket and can close it
+  const desk = document.getElementById("ticket-rows");
+  if (desk) {
+    desk.replaceChildren();
+    tickets.forEach((ticket) => {
+      const row = el("div", "row wrap");
+      const label = el("span", "", ticket.text + " · raised by " + ticket.raisedBy);
+      label.append(el("span", "detail", "Owner: " + ticket.owner));
+      row.append(label);
+      if (ticket.status === "closed") {
+        row.append(el("span", "pill ok", "Closed"));
+      } else {
+        const button = el("button", "btn outline", "Close ticket");
+        button.type = "button";
+        button.addEventListener("click", () => {
+          closeTicket(ticket.id);
+          renderTickets();
+          renderOverview();
+        });
+        row.append(button);
+      }
+      desk.append(row);
+    });
+  }
 }
 
 /* ---------- follow-up links ---------- */
@@ -1195,6 +1312,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (online && document.body.dataset.role) {
     if (!(await ensureServerSession())) return;
     await pullState();
+    await pullRecords();
     startPolling();
   }
   showBackendStatus();
@@ -1204,6 +1322,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   setUpReset();
   renderOverview();
   setUpFollowUps();
+  setUpTicketForm("query-send", "query-text", () => document.getElementById("query-desk").value);
+  setUpTicketForm("issue-send", "issue-text", () => "Support desk");
+  renderTickets();
   renderFees();
   renderHallTickets();
   renderAttendance();
