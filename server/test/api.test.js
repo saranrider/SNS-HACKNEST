@@ -319,3 +319,43 @@ test("a hall ticket request is issued by the COE only once the student is clear"
   assert.match(after.notifications[0].text, /hall ticket request was issued by Brundha/);
   api.stop();
 });
+
+test("a class can only be altered to a colleague who is free in that period", async () => {
+  const api = await start();
+  const staff = await api.login("saran");
+  const admin = await api.login("admin");
+  const alter = (date, period, colleague) => api.call("POST", "/api/requests", { kind: "duty", date, period, colleague }, staff);
+
+  // Monday 12 Oct 2026, period 1: Ravi and Karthik are teaching, Shalini is free
+  const busy = await alter("2026-10-12", 1, "Mr. Ravi T");
+  assert.equal(busy.status, 400);
+  assert.match(busy.body.error, /Mr. Ravi T has a class in period 1/);
+  assert.equal((await alter("2026-10-12", 2, "Ms. Shalini G")).status, 400, "Saran has no class in period 2 on Monday");
+  assert.equal((await alter("2026-10-11", 1, "Ms. Shalini G")).status, 400, "Sunday");
+  assert.equal((await alter("not a date", 1, "Ms. Shalini G")).status, 400);
+  assert.equal((await alter("2026-10-12", 1, "Someone Else")).status, 400);
+
+  const ok = await alter("2026-10-12", 1, "Ms. Shalini G");
+  assert.equal(ok.status, 201);
+  assert.equal(ok.body.requests[0].text, "Period 1 on Mon 12 Oct 2026 (Database Systems · II MCA) goes to Ms. Shalini G, who is free in that period");
+  assert.equal((await alter("2026-10-12", 1, "Ms. Shalini G")).status, 409, "the same class cannot be altered twice");
+
+  await api.call("POST", "/api/requests/accept", { id: ok.body.requests[0].id }, admin);
+  const after = (await api.call("GET", "/api/state", null, staff)).body;
+  assert.match(after.notifications[0].text, /class alteration was approved by Admin/);
+  api.stop();
+});
+
+test("staff get their own in and out times, and nobody else does", async () => {
+  const api = await start();
+  const staff = await api.login("saran");
+  const records = (await api.call("GET", "/api/records", null, staff)).body;
+  assert.equal(records.inOut.length, 6);
+  assert.deepEqual(records.inOut[0], { date: "2026-10-01", in: "08:48", out: "16:35" });
+  assert.equal(records.inOut.at(-1).out, null, "today has no out time yet");
+  for (const id of ["devi", "brundha", "admin", "alumni"]) {
+    const other = (await api.call("GET", "/api/records", null, await api.login(id))).body;
+    assert.equal(other.inOut, undefined);
+  }
+  api.stop();
+});

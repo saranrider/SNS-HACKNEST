@@ -64,6 +64,13 @@ const SCHEMA = `
     at      TEXT NOT NULL,
     read    INTEGER NOT NULL DEFAULT 0
   );
+  CREATE TABLE IF NOT EXISTS staff_inout (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id  TEXT NOT NULL REFERENCES users(id),
+    date     TEXT NOT NULL,
+    in_time  TEXT NOT NULL,
+    out_time TEXT
+  );
   CREATE TABLE IF NOT EXISTS requests (
     id         TEXT PRIMARY KEY,
     kind       TEXT NOT NULL,
@@ -90,7 +97,7 @@ const SCHEMA = `
   );
 `;
 
-const RECORD_TABLES = ["courses", "od_requests", "desks", "fees", "tickets", "requests", "notifications", "decisions", "audit"];
+const RECORD_TABLES = ["courses", "od_requests", "desks", "fees", "tickets", "staff_inout", "requests", "notifications", "decisions", "audit"];
 
 function createStore(file) {
   if (file) fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -115,6 +122,9 @@ function createStore(file) {
 
     const fee = db.prepare("INSERT INTO fees (student, item, status) VALUES (?, ?, ?)");
     for (const f of records.fees) fee.run(f.student, f.item, f.status);
+
+    const inOut = db.prepare("INSERT INTO staff_inout (user_id, date, in_time, out_time) VALUES (?, ?, ?, ?)");
+    for (const row of records.staffInOut) inOut.run(row.staff, row.date, row.in, row.out);
   });
 
   // A new database starts with the demo users and records.
@@ -199,6 +209,10 @@ function createStore(file) {
         .run(userId, id);
       return result.changes ? "done" : "unchanged";
     },
+
+    // One person's own in and out times, oldest first.
+    inOutFor: (userId) =>
+      db.prepare("SELECT date, in_time AS \"in\", out_time AS out FROM staff_inout WHERE user_id = ? ORDER BY date").all(userId),
 
     ticketRaiser: (id) => {
       const row = db.prepare("SELECT raised_by AS raisedBy, text FROM tickets WHERE id = ?").get(id);

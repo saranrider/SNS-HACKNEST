@@ -47,6 +47,15 @@ function seedRecords() {
       { student: "Priya D", item: "Second instalment", status: "due" },
       { student: "Vignesh A", item: "Hostel fee", status: "due" },
     ],
+    // When each staff member came in and left. A day with no "out" is today.
+    staffInOut: [
+      { staff: "saran", date: "2026-10-01", in: "08:48", out: "16:35" },
+      { staff: "saran", date: "2026-10-03", in: "08:55", out: "13:10" },
+      { staff: "saran", date: "2026-10-05", in: "08:41", out: "16:42" },
+      { staff: "saran", date: "2026-10-06", in: "08:50", out: "17:05" },
+      { staff: "saran", date: "2026-10-07", in: "09:02", out: "16:30" },
+      { staff: "saran", date: "2026-10-08", in: "08:52", out: null },
+    ],
     audit: [],
   };
 }

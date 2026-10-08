@@ -71,6 +71,7 @@ The server keeps its records in SQLite, in `server/data/hacknext.db`. The file i
 | `desks` | The four no-dues desks and their figures |
 | `fees` | Fee items, who recorded each payment and when |
 | `tickets` | Student queries and staff campus issues |
+| `staff_inout` | Each staff member's in and out time per day |
 | `requests` | What one role has asked another to accept, and its status |
 | `notifications` | One message per person, with a read mark |
 | `decisions` | Single-step approvals: who gave each and when |

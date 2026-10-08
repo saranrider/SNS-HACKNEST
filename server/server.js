@@ -6,6 +6,7 @@ const path = require("node:path");
 const express = require("express");
 const { createStore } = require("./store");
 const { hashPassword } = require("./seed");
+const timetable = require("./timetable");
 
 const SESSION_HOURS = 8;
 const TICKET_OWNERS = ["Support desk", "Class advisor", "Accounts", "Examinations"];
@@ -71,7 +72,7 @@ const REQUEST_KINDS = {
   submission: { from: "student", to: "staff", label: "Assignment submission", accepted: "accepted" },
   // anything else goes one step up: to the person's own superior
   general: { toBy: { student: "staff", staff: "coe", coe: "admin", alumni: "admin" }, label: "Request", accepted: "accepted" },
-  duty: { from: "staff", to: "admin", label: "Duty change", accepted: "approved" },
+  duty: { from: "staff", to: "admin", label: "Class alteration", accepted: "approved", alteration: true },
   certificate: { from: "alumni", to: "admin", label: "Certificate request", accepted: "issued" },
   referral: { from: "alumni", to: "admin", label: "Job referral", accepted: "published", announce: "student" },
   mentoring: { from: "alumni", to: "admin", label: "Mentoring offer", accepted: "published", announce: "student" },
@@ -153,7 +154,16 @@ function createApp(store) {
     if (user.role === "student") {
       return { courses: store.courses(), odRequests: requests.filter((item) => item.student === user.name) };
     }
-    if (user.role === "staff" || user.role === "coe") return { courses: store.courses(), odRequests: requests };
+    if (user.role === "staff") {
+      return {
+        courses: store.courses(),
+        odRequests: requests,
+        inOut: store.inOutFor(user.id), // their own times only
+        ownClasses: timetable.ownClasses,
+        colleagueBusy: timetable.colleagueBusy,
+      };
+    }
+    if (user.role === "coe") return { courses: store.courses(), odRequests: requests };
     if (user.role === "admin") return { courses: store.courses(), odRequests: requests, desks: store.desks() };
     return {};
   }
@@ -293,6 +303,14 @@ function createApp(store) {
       return res.status(403).json({ error: "Your role cannot send this kind of request." });
     }
     let text = String((req.body && req.body.text) || "").trim();
+    if (rule.alteration) {
+      // the class can only go to a colleague who is free in that period
+      const checked = timetable.checkAlteration(req.body.date, req.body.period, req.body.colleague);
+      if (checked.error) return res.status(400).json({ error: checked.error });
+      const taken = store.requests().some((item) => item.kind === kind && item.text.startsWith(checked.slot + " ("));
+      if (taken) return res.status(409).json({ error: "That class already has an alteration." });
+      text = checked.text;
+    }
     if (text.length < 3 || text.length > 300) {
       return res.status(400).json({ error: "Write between 3 and 300 characters." });
     }
