@@ -1,18 +1,21 @@
 # Demo script (about three minutes)
 
-Before you start: run the server (`cd server && npm start`), open `http://localhost:3000`, and press "Reset demo data" at the bottom of any dashboard. Keep `split.html` open in a second tab. The password for every account is `demo1234`.
+Before you start: run the server (`cd server && npm start`) and open `http://localhost:3000` in four browser tabs. Sign in as `devi` (Student), `saran` (Staff), `admin` (Admin) and `brundha` (COE), one per tab; each tab keeps its own sign-in. The password for every account is `demo1234`. Press "Reset demo data" at the bottom of any dashboard.
 
 | Time | Do this | Say this |
 |---|---|---|
-| 0:00 | Sign in as `devi`. | Devi's hall ticket is held: attendance is 74.5%, under the 75% line, and one fee is due. |
-| 0:30 | Open the side-by-side view, Staff on the left and Student on the right. Approve Devi's OD request. | Staff approves once. Her attendance moves to 77.6% on her own page, with no form carried anywhere. |
-| 1:10 | Switch the left pane to Admin and record the fee payment. | The accounts desk clears by itself, no dues becomes 4 / 4, and the hall ticket is ready on both the Student and COE pages. |
-| 1:50 | On the Student pane, send a query to a desk. Show the Admin support desk, then close the ticket. | A query is a ticket with one owner, and the sender sees it close. |
-| 2:20 | On the Student page, submit a project proposal with a title close to the 2024 face recognition attendance project. | The proposal matches an earlier project, so its files open and the student continues that work. |
-| 2:50 | Stop. | Enter it once, and every role sees it. |
+| 0:00 | Show the Student tab. | Devi's hall ticket is held: attendance is 74.5%, under the 75% line, and one fee is due. She sees only her own page. |
+| 0:25 | Staff tab: approve Devi's OD request. Switch to the Student tab. | Within three seconds she is notified, and her attendance is 77.6%. Nobody carried a form. |
+| 1:00 | Admin tab: record the fee payment. Show the Student tab, then the COE tab. | The accounts desk clears by itself. Devi and the COE are both told the hall ticket is ready. |
+| 1:35 | COE tab: press "Issue to all eligible". Show the Student tab. | The COE issues it, and Devi is notified that it is issued. |
+| 2:00 | Student tab: send a query. Admin tab: close the ticket. | A query reaches the support desk at once, and the sender is told when it is resolved. |
+| 2:30 | Student tab: submit a project proposal with a title close to the 2024 face recognition attendance project. | The proposal matches an earlier project, so its files open and the student continues that work. |
+| 2:55 | Stop. | Enter it once, and the right person is told in real time. |
 
 ## If a judge asks
 
+- **Can a student see the staff page?** No. Each account is accepted only at its own sign-in, each page opens only for its role, and the server sends each role only its own records.
+- **How fast is "real time"?** Each page asks the server for changes every three seconds. Push delivery (WebSockets) is the next step.
 - **Is the data real?** No. Every name, mark and count is sample data.
 - **How is it stored?** In a SQLite database on the server, with a table for each kind of record. A database server such as PostgreSQL is the next step.
 - **Is the project matching done on images?** Not yet. It compares title and abstract keywords; the graphical abstract is attached but not compared.
