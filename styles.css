@@ -783,12 +783,6 @@ td {
   margin: 0 auto;
 }
 
-.front-band svg {
-  flex: none;
-  width: 52px;
-  height: 52px;
-}
-
 .front-title {
   flex: 1 1 320px;
 }
