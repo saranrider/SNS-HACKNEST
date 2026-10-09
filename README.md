@@ -19,6 +19,23 @@ Clickable screens for the five roles in our workflow diagram. They work on their
 | `app.js` | Sample data and page logic |
 | `config.js` | The backend's address, when it is hosted separately |
 
+## Mobile app
+
+The site is also an installable app (a progressive web app), so there is one codebase for computer and phone.
+
+- On a phone the pages rearrange themselves: a compact top bar, the module menu as one row that scrolls sideways, and five small role tiles above the sign-in form.
+- **Android (Chrome):** open the site and press "Install this app" on the sign-in page, or use the browser menu and choose "Install app".
+- **iPhone (Safari):** press Share, then "Add to Home Screen".
+- Once installed it opens full screen from its own icon, and it opens even with no connection, in the same browser-only mode described below.
+
+Installing needs the site to be served over HTTPS (for example on Render or GitHub Pages) or from `localhost`. Opened from a laptop's address on the same Wi-Fi, such as `http://192.168.1.5:3000`, it works as a normal page but cannot be installed.
+
+| File | What it is |
+|---|---|
+| `manifest.webmanifest` | The app's name, colours and icons |
+| `sw.js` | Keeps a copy of the pages for opening with no connection; never stores API replies |
+| `icons/` | The app icons |
+
 ## Signing in
 
 Choose who is signing in, then type that person's user ID and password. The password for every demo account is `demo1234`.

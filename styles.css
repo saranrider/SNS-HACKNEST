@@ -1214,3 +1214,122 @@ td {
 h3.section-label {
   margin-top: 16px;
 }
+
+/* ---------- phones and the installed app ---------- */
+
+.bell {
+  min-height: 44px;
+}
+
+/* keep clear of the notch and the home indicator when installed */
+.topbar,
+.front-band {
+  padding-top: calc(10px + env(safe-area-inset-top));
+}
+
+.page-foot {
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+  }
+
+  /* the app name is enough on a phone; the full line would not fit */
+  .brand span {
+    display: none;
+  }
+
+  .session {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  /* the name is on the page heading just below */
+  .session-user,
+  .session-avatar {
+    display: none;
+  }
+
+  .session .btn.outline,
+  .bell {
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+
+  .layout {
+    padding: 0 12px 16px;
+  }
+
+  .sidenav {
+    margin: 0 -12px 14px;
+    padding: 6px 12px;
+  }
+
+  .page-head h1 {
+    font-size: 22px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .bell-panel {
+    position: fixed;
+    top: calc(60px + env(safe-area-inset-top));
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+
+  .toasts {
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    width: auto;
+  }
+
+  /* sign-in: five compact tiles so the form is on the first screen */
+  .front-band {
+    padding: calc(20px + env(safe-area-inset-top)) 16px 84px;
+  }
+
+  .front-card {
+    gap: 22px;
+    margin: -64px 10px 24px;
+    padding: 18px;
+  }
+
+  .role-tiles {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+
+  .role-tile {
+    align-items: center;
+    padding: 8px 2px;
+    text-align: center;
+  }
+
+  .role-tile strong {
+    font-size: 12px;
+  }
+
+  .role-tile span {
+    display: none;
+  }
+
+  .role-image {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 2px;
+    padding: 7px;
+  }
+
+  .content section {
+    scroll-margin-top: 64px;
+  }
+}
