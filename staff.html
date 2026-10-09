@@ -25,6 +25,7 @@
       <a href="#syllabus">Syllabus</a>
       <a href="#blueprint">Question cluster and blueprint</a>
       <a href="#project">Project guidance</a>
+      <a href="#invigilation">Invigilation duty</a>
       <a href="#duty">Duty alteration</a>
       <a href="#inout">Staff in/out</a>
       <a href="#issues">Issues at campus</a>
@@ -46,7 +47,7 @@
         <div class="card-head">
           <div>
             <h2>Requests</h2>
-            <p class="sub">Anything not covered elsewhere goes to the Controller of Examinations, who is told at once. You are told when it is accepted.</p>
+            <p class="sub">Academic and examination matters go to the Controller of Examinations, who is told at once. A campus issue goes to the support desk instead: use "Issues at campus".</p>
           </div>
           <button type="button" class="btn" data-request="general" data-ask="What do you need" data-send="Send to COE">New request</button>
         </div>
@@ -110,6 +111,12 @@
         </div>
       </section>
 
+      <section class="card" id="invigilation">
+        <h2>Invigilation duty</h2>
+        <p class="sub">Given to you by the Controller of Examinations. Accept it, or decline so that it can go to someone else.</p>
+        <div data-inbox="invigilation" data-empty="You have no invigilation duty waiting." aria-live="polite"></div>
+      </section>
+
       <div class="grid-2">
         <section class="card" id="project">
           <h2>Project guidance</h2>
@@ -166,6 +173,7 @@
 
         <section class="card" id="issues">
           <h2>Issues at campus</h2>
+          <p class="sub">Every issue goes to the support desk in the Admin module, which closes it and tells you.</p>
           <div class="row"><span>Lab 2 projector not working</span><span class="pill wait" data-followup="admin#support">Open · support desk</span></div>
           <form class="form">
             <label for="issue-text">Report a new issue</label>

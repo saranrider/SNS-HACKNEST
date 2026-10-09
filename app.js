@@ -1416,7 +1416,9 @@ const requestKinds = {
   submission: { to: "staff", label: "Assignment submission", accepted: "accepted", accept: "Accept submission" },
   general: { label: "Request", accepted: "accepted", accept: "Accept" },
   // goes to the one colleague asked to take the class; the office is told once it is agreed
-  duty: { to: "staff", label: "Class alteration", accepted: "accepted", accept: "Accept the class", inform: "admin" },
+  duty: { to: "staff", label: "Class alteration", accepted: "accepted", accept: "Accept the class", inform: "admin", declinable: true },
+  // given by the examinations office to one staff member, who accepts or declines it
+  invigilation: { to: "staff", label: "Invigilation duty", accepted: "accepted", accept: "Accept duty", declinable: true },
   certificate: { to: "admin", label: "Certificate request", accepted: "issued", accept: "Issue" },
   referral: { to: "admin", label: "Job referral", accepted: "published", accept: "Publish", announce: "student" },
   mentoring: { to: "admin", label: "Mentoring offer", accepted: "published", accept: "Publish", announce: "student" },
@@ -1441,14 +1443,14 @@ function readableDateTime(value) {
 function addRequest(kind, text, dates, extra) {
   const rule = requestKinds[kind];
   const toRole = rule.to || superiorOf[document.body.dataset.role];
-  const toName = (extra && extra.colleague) || "";
+  const toName = (extra && (extra.colleague || extra.staff)) || "";
   const shown = dates ? text + " · from " + readableDateTime(dates.from) + " to " + readableDateTime(dates.to) : text;
   const state = loadState();
   const request = { id: "local-" + Date.now(), kind, text: shown, fromName: currentUserName(), toRole, status: "open" };
   if (toName) {
     request.toName = toName;
-    request.slot = extra.date + "#" + extra.period;
-    state.covering.push({ slot: request.slot, name: toName, by: currentUserName() });
+    request.slot = extra.session ? "inv:" + extra.date + "#" + extra.session : extra.date + "#" + extra.period;
+    if (kind === "duty") state.covering.push({ slot: request.slot, name: toName, by: currentUserName() });
   }
   state.requests.push(request);
   addNote(state, toName ? "user:" + toName : toRole, "New " + rule.label.toLowerCase() + " from " + currentUserName() + ": " + shown);
@@ -1480,6 +1482,19 @@ function acceptRequest(id) {
   }
   saveState(state);
   sendAction("/api/requests/accept", { id });
+}
+
+// The person asked says no; the sender is told so they can ask someone else.
+function declineRequest(id) {
+  const state = loadState();
+  const request = state.requests.find((item) => item.id === id);
+  if (!request || request.status !== "open") return;
+  const rule = requestKinds[request.kind];
+  request.status = "declined";
+  state.covering = state.covering.filter((item) => !(item.slot === request.slot && item.name === request.toName));
+  addNote(state, "user:" + request.fromName, currentUserName() + " declined your " + rule.label.toLowerCase() + ": " + request.text + ". Please choose someone else.");
+  saveState(state);
+  sendAction("/api/requests/decline", { id });
 }
 
 function labelled(form, id, text, field) {
@@ -1613,8 +1628,10 @@ function renderRequests() {
       const row = el("div", "row wrap");
       const label = el("span", "", item.text);
       label.append(el("span", "detail", rule.label + " · sent to " + target));
-      const open = item.status === "open";
-      row.append(label, el("span", "pill " + (open ? "wait" : "ok"), open ? "Waiting for " + target : capital(rule.accepted)));
+      let pill = el("span", "pill ok", capital(rule.accepted));
+      if (item.status === "open") pill = el("span", "pill wait", "Waiting for " + target);
+      if (item.status === "declined") pill = el("span", "pill stop", "Declined by " + target);
+      row.append(label, pill);
       box.append(row);
     });
   });
@@ -1649,6 +1666,17 @@ function renderRequests() {
           renderHallTickets();
         });
         row.append(button);
+        if (rule.declinable) {
+          const no = el("button", "btn outline", "Decline");
+          no.type = "button";
+          no.addEventListener("click", () => {
+            declineRequest(item.id);
+            renderRequests();
+          });
+          row.append(no);
+        }
+      } else if (item.status === "declined") {
+        row.append(el("span", "pill stop", "Declined · " + item.fromName + " notified"));
       } else {
         row.append(el("span", "pill ok", capital(rule.accepted) + " · " + item.fromName + " notified"));
       }
@@ -1881,6 +1909,59 @@ function setUpAlteration() {
   });
 }
 
+/* ---------- COE: invigilation duty ---------- */
+
+const examHalls = ["A101", "A102", "A201", "B105"];
+const examSessions = { FN: "forenoon", AN: "afternoon" };
+
+// The COE picks the date, session, hall and staff member. The duty goes to
+// that one person for acceptance. The server repeats these checks.
+function setUpInvigilation() {
+  const form = document.getElementById("invigilation-form");
+  if (!form) return;
+  const dateField = document.getElementById("inv-date");
+  const sessionField = document.getElementById("inv-session");
+  const hallField = document.getElementById("inv-hall");
+  const staffField = document.getElementById("inv-staff");
+  const problem = document.getElementById("inv-error");
+
+  examHalls.forEach((hall) => hallField.append(el("option", "", hall)));
+  accounts.filter((account) => account.role === "staff").forEach((account) => staffField.append(el("option", "", account.name)));
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const date = readDate(dateField.value);
+    if (!date) {
+      problem.textContent = "Choose the date of the examination.";
+      dateField.focus();
+      return;
+    }
+    if (date.day === "Sun") {
+      problem.textContent = "There are no examinations on a Sunday.";
+      dateField.focus();
+      return;
+    }
+    const session = sessionField.value;
+    const hall = hallField.value;
+    const staff = staffField.value;
+    const slot = "inv:" + dateField.value + "#" + session;
+    const when = date.label + ", " + examSessions[session];
+    const given = loadState().requests.filter((item) => item.kind === "invigilation" && item.status !== "declined" && item.slot === slot);
+    if (given.some((item) => item.toName === staff)) {
+      problem.textContent = staff + " already has an invigilation duty on " + when + ".";
+      return;
+    }
+    if (given.some((item) => item.text.endsWith("Hall " + hall))) {
+      problem.textContent = "Hall " + hall + " already has an invigilator on " + when + ".";
+      return;
+    }
+    problem.textContent = "";
+    addRequest("invigilation", "Invigilation · " + when + " · Hall " + hall, null, { date: dateField.value, session, hall, staff });
+    dateField.value = "";
+    renderRequests();
+  });
+}
+
 /* ---------- alumni: directory search ---------- */
 
 const alumniDirectory = [
@@ -1985,6 +2066,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setUpAlumniSearch();
   renderInOut();
   setUpAlteration();
+  setUpInvigilation();
   renderNotifications();
 
   // without a server, another tab of this browser may act: pick that up at once
