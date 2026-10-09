@@ -26,7 +26,7 @@ Choose who is signing in, then type that person's user ID and password. The pass
 | Role | User ID |
 |---|---|
 | Student | `devi` |
-| Staff | `saran` |
+| Staff | `saran`, `raja`, `gopika` |
 | COE | `brundha` |
 | Admin | `admin` |
 | Alumni | `alumni` |
@@ -55,7 +55,7 @@ Every acceptance tells the people it concerns, within about three seconds. A "No
 | Admin issues the certificate | The alumnus |
 | Staff accept a project proposal | The student |
 | A student sends a new OD request | Staff; the student is told when it is approved |
-| Staff ask for a class alteration | The admin; staff are told when it is approved |
+| Staff ask a colleague to take a class | That colleague only; on acceptance, the one who asked and the admin are told |
 | An alumnus asks for a certificate, a business listing or a record update | The admin; the alumnus is told when it is done |
 | An alumnus posts a referral or offers mentoring | The admin; on publishing, the alumnus and the students are told |
 
@@ -69,7 +69,7 @@ A new OD request asks for the event and a From and To date and time; the end mus
 
 Requests go one step up. A student's "Request hall ticket" goes to the COE, who can issue it only once attendance and dues are clear. "Submit" on an assignment goes to staff. The "Requests" card on each dashboard takes anything else and sends it to that person's superior: student to class advisor, staff to COE, COE and alumni to the admin office. The person it is sent to sees it under "Sent to you" and accepts it there.
 
-On the Staff page, "Your in and out times" lists each working day's in time, out time and hours, and only that staff member's own times are sent to the page. "Duty alteration" hands a class to a colleague during leave: choose the date, then one of your own periods that day, and the list offers only colleagues who have no class in that period. If nobody is free the request cannot be sent, the same class cannot be altered twice, and the server repeats all of these checks. The timetable is sample data held in `server/timetable.js`.
+On the Staff page, "Your in and out times" lists each working day's in time, out time and hours, and only that staff member's own times are sent to the page. "Duty alteration" asks a colleague to take a class during leave: choose the date, then one of your own periods that day, and the list offers only the other staff members who have no class in that period and are not already covering another class then. The request goes to that colleague alone, who accepts it on their own page; the one who asked and the office are then told. If nobody is free the request cannot be sent, the same class cannot be altered twice, and the server repeats all of these checks. Each of the three staff accounts has its own timetable and its own in and out times. The timetable is sample data held in `server/timetable.js`.
 
 The module menu runs along the top of each dashboard and stays in view while scrolling.
 

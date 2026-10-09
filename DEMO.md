@@ -16,6 +16,7 @@ Before you start: run the server (`cd server && npm start`) and open `http://loc
 
 - **Can a student see the staff page?** No. Each account is accepted only at its own sign-in, each page opens only for its role, and the server sends each role only its own records.
 - **How fast is "real time"?** Each page asks the server for changes every three seconds. Push delivery (WebSockets) is the next step.
+- **How does a class alteration work?** Sign in as `saran`, choose Monday 12 Oct and period 1: only Gopika is offered, because Raja teaches then. Sign in as `gopika` in another tab and accept; Saran and the admin are both told.
 - **Is the data real?** No. Every name, mark and count is sample data.
 - **How is it stored?** In a SQLite database on the server, with a table for each kind of record. A database server such as PostgreSQL is the next step.
 - **Is the project matching done on images?** Not yet. It compares title and abstract keywords; the graphical abstract is attached but not compared.
