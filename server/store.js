@@ -80,7 +80,10 @@ const SCHEMA = `
     to_role    TEXT NOT NULL,
     status     TEXT NOT NULL DEFAULT 'open',
     raised_at  TEXT NOT NULL,
-    decided_by TEXT REFERENCES users(id)
+    decided_by TEXT REFERENCES users(id),
+    to_user    TEXT REFERENCES users(id),
+    to_name    TEXT,
+    slot       TEXT
   );
   CREATE TABLE IF NOT EXISTS decisions (
     key TEXT PRIMARY KEY,
@@ -127,15 +130,27 @@ function createStore(file) {
     for (const row of records.staffInOut) inOut.run(row.staff, row.date, row.in, row.out);
   });
 
-  // A new database starts with the demo users and records.
-  if (db.prepare("SELECT COUNT(*) AS n FROM users").get().n === 0) {
-    const seed = seedDatabase();
-    const user = db.prepare("INSERT INTO users (id, role, name, title, salt, hash) VALUES (?, ?, ?, ?, ?, ?)");
-    db.transaction(() => {
-      for (const u of seed.users) user.run(u.id, u.role, u.name, u.title, u.salt, u.hash);
-    })();
-    insertRecords(seed);
+  // A database made by an earlier version lacks the newer request columns.
+  const requestColumns = db.prepare("PRAGMA table_info(requests)").all().map((column) => column.name);
+  for (const column of ["to_user", "to_name", "slot"]) {
+    if (!requestColumns.includes(column)) db.exec("ALTER TABLE requests ADD COLUMN " + column + " TEXT");
   }
+
+  // A new database starts with the demo users and records. An existing one
+  // is given any demo account that was added since it was made.
+  const isNew = db.prepare("SELECT COUNT(*) AS n FROM users").get().n === 0;
+  const seed = seedDatabase();
+  const addUser = db.prepare("INSERT OR IGNORE INTO users (id, role, name, title, salt, hash) VALUES (?, ?, ?, ?, ?, ?)");
+  const addInOut = db.prepare("INSERT INTO staff_inout (user_id, date, in_time, out_time) VALUES (?, ?, ?, ?)");
+  db.transaction(() => {
+    for (const u of seed.users) {
+      const added = addUser.run(u.id, u.role, u.name, u.title, u.salt, u.hash).changes === 1;
+      if (added && !isNew) {
+        for (const row of seed.staffInOut.filter((item) => item.staff === u.id)) addInOut.run(row.staff, row.date, row.in, row.out);
+      }
+    }
+  })();
+  if (isNew) insertRecords(seed);
 
   const toOd = (row) => {
     const request = {
@@ -188,19 +203,30 @@ function createStore(file) {
     requests: () =>
       db
         .prepare(
-          "SELECT id, kind, text, from_user AS fromUser, from_name AS fromName, to_role AS toRole, status, raised_at AS raisedAt FROM requests ORDER BY raised_at, rowid"
+          "SELECT id, kind, text, from_user AS fromUser, from_name AS fromName, to_role AS toRole, to_user AS toUser, to_name AS toName, slot, status, raised_at AS raisedAt FROM requests ORDER BY raised_at, rowid"
         )
         .all(),
 
     findRequest: (id) =>
       db
-        .prepare("SELECT id, kind, text, from_user AS fromUser, from_name AS fromName, to_role AS toRole, status FROM requests WHERE id = ?")
+        .prepare("SELECT id, kind, text, from_user AS fromUser, from_name AS fromName, to_role AS toRole, to_user AS toUser, status FROM requests WHERE id = ?")
         .get(id) || null,
 
     addRequest: (request) => {
       db.prepare(
-        "INSERT INTO requests (id, kind, text, from_user, from_name, to_role, status, raised_at) VALUES (?, ?, ?, ?, ?, ?, 'open', ?)"
-      ).run(request.id, request.kind, request.text, request.fromUser, request.fromName, request.toRole, request.raisedAt);
+        "INSERT INTO requests (id, kind, text, from_user, from_name, to_role, to_user, to_name, slot, status, raised_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)"
+      ).run(
+        request.id,
+        request.kind,
+        request.text,
+        request.fromUser,
+        request.fromName,
+        request.toRole,
+        request.toUser || null,
+        request.toName || null,
+        request.slot || null,
+        request.raisedAt
+      );
     },
 
     acceptRequest: (id, userId) => {

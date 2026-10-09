@@ -20,6 +20,8 @@ const SESSION_KEY = "cms-demo-session";
 const accounts = [
   { id: "devi", role: "student", name: "Devi", title: "Student", page: "student.html", about: "Attendance, OD, no dues, hall ticket", image: "images/student.svg" },
   { id: "saran", role: "staff", name: "Saran", title: "Staff", page: "staff.html", about: "Approvals, attendance, question papers", image: "images/staff.svg" },
+  { id: "raja", role: "staff", name: "Raja", title: "Staff", page: "staff.html", about: "Approvals, attendance, question papers", image: "images/staff.svg" },
+  { id: "gopika", role: "staff", name: "Gopika", title: "Staff", page: "staff.html", about: "Approvals, attendance, question papers", image: "images/staff.svg" },
   { id: "brundha", role: "coe", name: "Brundha", title: "COE", page: "coe.html", about: "Syllabus, hall tickets, results", image: "images/coe.svg" },
   { id: "admin", role: "admin", name: "Admin", title: "Admin", page: "admin.html", about: "Fees, clearance, certificates", image: "images/admin.svg" },
   { id: "alumni", role: "alumni", name: "Alumni", title: "Alumni", page: "alumni.html", about: "Certificates, placement, community", image: "images/alumni.svg" },
@@ -203,7 +205,7 @@ function recordStore() {
 }
 
 function loadState() {
-  const state = { odApproved: [], feePaid: false, tickets: [], requests: [], decisions: [], notifications: [] };
+  const state = { odApproved: [], feePaid: false, tickets: [], requests: [], covering: [], decisions: [], notifications: [] };
   try {
     Object.assign(state, JSON.parse(recordStore().getItem(STORE_KEY)) || {});
   } catch (error) {
@@ -841,7 +843,8 @@ function setUpLogin() {
   // the portal picked in step 1; a sign-in for any other role is refused
   let chosenRole = "";
 
-  accounts.forEach((account) => {
+  const oneForEachRole = accounts.filter((account, index) => accounts.findIndex((item) => item.role === account.role) === index);
+  oneForEachRole.forEach((account) => {
     const button = el("button", "role-tile");
     button.type = "button";
     button.setAttribute("aria-pressed", "false");
@@ -1140,8 +1143,7 @@ function closeTicket(id) {
   const ticket = state.tickets.find((item) => item.id === id);
   if (!ticket) return;
   ticket.status = "closed";
-  const raiser = accounts.find((item) => item.name === ticket.raisedBy);
-  if (raiser) addNote(state, raiser.role, "Your request was resolved by the support desk: " + ticket.text);
+  addNote(state, "user:" + ticket.raisedBy, "Your request was resolved by the support desk: " + ticket.text);
   saveState(state);
   sendAction("/api/tickets/close", { id });
 }
@@ -1220,9 +1222,13 @@ function noteIfReady(state) {
   addNote(state, "coe", DEMO_STUDENT + " is now eligible. The hall ticket is ready to issue.");
 }
 
+// A message is for a whole role ("staff") or for one person ("user:Raja").
+function isForMe(item) {
+  return item.to === document.body.dataset.role || item.to === "user:" + currentUserName();
+}
+
 function myNotifications() {
-  const role = document.body.dataset.role;
-  return loadState().notifications.filter((item) => item.to === role);
+  return loadState().notifications.filter(isForMe);
 }
 
 async function markNotificationsRead() {
@@ -1231,10 +1237,9 @@ async function markNotificationsRead() {
     if (response && response.ok) recordStore().setItem(STORE_KEY, JSON.stringify(response.data));
     return;
   }
-  const role = document.body.dataset.role;
   const state = loadState();
   state.notifications.forEach((item) => {
-    if (item.to === role) item.read = true;
+    if (isForMe(item)) item.read = true;
   });
   saveState(state);
 }
@@ -1323,7 +1328,7 @@ const approvals = {
   "cert.lakshmi.issue": [["alumni", "Your transcript has been issued. You can download it with its QR code."]],
   "cert.anitha.issue": [],
   "hallticket.devi": [["student", "Your hall ticket has been issued by the COE."]],
-  "project.devi": [["student", "Saran accepted your proposal. You can continue the 2024 face recognition attendance project."]],
+  "project.devi": [["student", "Your guide accepted your proposal. You can continue the 2024 face recognition attendance project."]],
   "attendance.p5": [],
   "fees.remind": [["student", "Reminder from the accounts desk: your exam fee is due and is holding your hall ticket."]],
 };
@@ -1410,7 +1415,8 @@ const requestKinds = {
   hallticket: { to: "coe", label: "Hall ticket request", accepted: "issued", accept: "Issue hall ticket", decision: "hallticket.devi" },
   submission: { to: "staff", label: "Assignment submission", accepted: "accepted", accept: "Accept submission" },
   general: { label: "Request", accepted: "accepted", accept: "Accept" },
-  duty: { to: "admin", label: "Class alteration", accepted: "approved", accept: "Approve" },
+  // goes to the one colleague asked to take the class; the office is told once it is agreed
+  duty: { to: "staff", label: "Class alteration", accepted: "accepted", accept: "Accept the class", inform: "admin" },
   certificate: { to: "admin", label: "Certificate request", accepted: "issued", accept: "Issue" },
   referral: { to: "admin", label: "Job referral", accepted: "published", accept: "Publish", announce: "student" },
   mentoring: { to: "admin", label: "Mentoring offer", accepted: "published", accept: "Publish", announce: "student" },
@@ -1430,14 +1436,22 @@ function readableDateTime(value) {
 }
 
 // "dates" is { from, to } for the kinds that need a start and an end.
-// "extra" is anything more the server needs to check the request itself.
+// "extra" is anything more the server needs to check the request itself;
+// extra.colleague sends the request to that one person instead of a role.
 function addRequest(kind, text, dates, extra) {
   const rule = requestKinds[kind];
   const toRole = rule.to || superiorOf[document.body.dataset.role];
+  const toName = (extra && extra.colleague) || "";
   const shown = dates ? text + " · from " + readableDateTime(dates.from) + " to " + readableDateTime(dates.to) : text;
   const state = loadState();
-  state.requests.push({ id: "local-" + Date.now(), kind, text: shown, fromName: currentUserName(), toRole, status: "open" });
-  addNote(state, toRole, "New " + rule.label.toLowerCase() + " from " + currentUserName() + ": " + shown);
+  const request = { id: "local-" + Date.now(), kind, text: shown, fromName: currentUserName(), toRole, status: "open" };
+  if (toName) {
+    request.toName = toName;
+    request.slot = extra.date + "#" + extra.period;
+    state.covering.push({ slot: request.slot, name: toName, by: currentUserName() });
+  }
+  state.requests.push(request);
+  addNote(state, toName ? "user:" + toName : toRole, "New " + rule.label.toLowerCase() + " from " + currentUserName() + ": " + shown);
   saveState(state);
   sendAction("/api/requests", Object.assign({ kind, text }, dates || {}, extra || {}));
 }
@@ -1456,9 +1470,10 @@ function acceptRequest(id) {
     if (!state.decisions.includes(rule.decision)) state.decisions.push(rule.decision);
   }
   request.status = "accepted";
-  const sender = accounts.find((item) => item.name === request.fromName);
-  if (sender) {
-    addNote(state, sender.role, "Your " + rule.label.toLowerCase() + " was " + rule.accepted + " by " + currentUserName() + ": " + request.text);
+  const done = rule.label.toLowerCase() + " was " + rule.accepted + " by " + currentUserName() + ": " + request.text;
+  addNote(state, "user:" + request.fromName, "Your " + done);
+  if (rule.inform) {
+    addNote(state, rule.inform, rule.label + " agreed between " + request.fromName + " and " + currentUserName() + ": " + request.text);
   }
   if (rule.announce) {
     addNote(state, rule.announce, "New from the alumni network (" + rule.label.toLowerCase() + "): " + request.text);
@@ -1594,7 +1609,7 @@ function renderRequests() {
     box.replaceChildren();
     mine.forEach((item) => {
       const rule = requestKinds[item.kind];
-      const target = titleOf(item.toRole);
+      const target = item.toName || titleOf(item.toRole);
       const row = el("div", "row wrap");
       const label = el("span", "", item.text);
       label.append(el("span", "detail", rule.label + " · sent to " + target));
@@ -1613,7 +1628,9 @@ function renderRequests() {
 
   document.querySelectorAll("[data-inbox]").forEach((box) => {
     const kinds = box.dataset.inbox.split(" ");
-    const waiting = requests.filter((item) => kinds.includes(item.kind) && item.toRole === role && item.fromName !== me);
+    const waiting = requests.filter(
+      (item) => kinds.includes(item.kind) && item.toRole === role && item.fromName !== me && (!item.toName || item.toName === me)
+    );
     box.replaceChildren();
     if (waiting.length === 0 && box.dataset.empty) box.append(el("p", "note muted", box.dataset.empty));
     waiting.forEach((item) => {
@@ -1642,15 +1659,34 @@ function renderRequests() {
 
 /* ---------- staff: in and out times ---------- */
 
-// Sample values, replaced by the server's when it is running.
-const staffInOut = [
-  { date: "2026-10-01", in: "08:48", out: "16:35" },
-  { date: "2026-10-03", in: "08:55", out: "13:10" },
-  { date: "2026-10-05", in: "08:41", out: "16:42" },
-  { date: "2026-10-06", in: "08:50", out: "17:05" },
-  { date: "2026-10-07", in: "09:02", out: "16:30" },
-  { date: "2026-10-08", in: "08:52", out: null },
-];
+// Each staff member's own times. Sample values, replaced by the server's
+// when it is running.
+const inOutSamples = {
+  Saran: [
+    { date: "2026-10-01", in: "08:48", out: "16:35" },
+    { date: "2026-10-03", in: "08:55", out: "13:10" },
+    { date: "2026-10-05", in: "08:41", out: "16:42" },
+    { date: "2026-10-06", in: "08:50", out: "17:05" },
+    { date: "2026-10-07", in: "09:02", out: "16:30" },
+    { date: "2026-10-08", in: "08:52", out: null },
+  ],
+  Raja: [
+    { date: "2026-10-01", in: "08:35", out: "16:20" },
+    { date: "2026-10-03", in: "08:40", out: "13:00" },
+    { date: "2026-10-05", in: "08:38", out: "16:30" },
+    { date: "2026-10-06", in: "08:44", out: "16:15" },
+    { date: "2026-10-07", in: "08:31", out: "16:50" },
+    { date: "2026-10-08", in: "08:36", out: null },
+  ],
+  Gopika: [
+    { date: "2026-10-01", in: "08:58", out: "16:45" },
+    { date: "2026-10-05", in: "08:49", out: "16:40" },
+    { date: "2026-10-06", in: "08:53", out: "16:35" },
+    { date: "2026-10-07", in: "08:47", out: "17:10" },
+    { date: "2026-10-08", in: "08:55", out: null },
+  ],
+};
+const staffInOut = [];
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -1702,22 +1738,54 @@ function renderInOut() {
 
 /* ---------- staff: class alteration ---------- */
 
-// The weekly timetable. The server holds the same one and checks every
-// alteration against it; these values are used when there is no server.
-const ownClasses = {
-  Mon: { 1: "Database Systems · II MCA", 3: "Data Structures · I MCA", 5: "Database Systems lab · II MCA", 7: "Data Structures · I MCA" },
-  Tue: { 2: "Database Systems · II MCA", 4: "Data Structures · I MCA", 6: "Database Systems lab · II MCA" },
-  Wed: { 1: "Data Structures · I MCA", 3: "Database Systems · II MCA", 5: "Data Structures lab · I MCA" },
-  Thu: { 2: "Database Systems · II MCA", 5: "Data Structures · I MCA", 7: "Database Systems · II MCA" },
-  Fri: { 1: "Data Structures · I MCA", 4: "Database Systems · II MCA", 6: "Data Structures · I MCA" },
-  Sat: { 2: "Database Systems · II MCA", 3: "Data Structures · I MCA" },
+// The weekly timetable by staff member. The server holds the same one and
+// checks every alteration against it; these values are used when there is
+// no server.
+const timetableSamples = {
+  Saran: {
+    Mon: { 1: "Database Systems · II MCA", 3: "Data Structures · I MCA", 5: "Database Systems lab · II MCA", 7: "Data Structures · I MCA" },
+    Tue: { 2: "Database Systems · II MCA", 4: "Data Structures · I MCA", 6: "Database Systems lab · II MCA" },
+    Wed: { 1: "Data Structures · I MCA", 3: "Database Systems · II MCA", 5: "Data Structures lab · I MCA" },
+    Thu: { 2: "Database Systems · II MCA", 5: "Data Structures · I MCA", 7: "Database Systems · II MCA" },
+    Fri: { 1: "Data Structures · I MCA", 4: "Database Systems · II MCA", 6: "Data Structures · I MCA" },
+    Sat: { 2: "Database Systems · II MCA", 3: "Data Structures · I MCA" },
+  },
+  Raja: {
+    Mon: { 1: "Operating Systems · II MCA", 2: "Software Engineering · I MCA", 6: "Operating Systems lab · II MCA", 8: "Software Engineering · I MCA" },
+    Tue: { 1: "Software Engineering · I MCA", 2: "Operating Systems · II MCA", 3: "Operating Systems lab · II MCA", 7: "Software Engineering · I MCA" },
+    Wed: { 2: "Operating Systems · II MCA", 4: "Software Engineering · I MCA", 6: "Operating Systems · II MCA" },
+    Thu: { 1: "Software Engineering · I MCA", 4: "Operating Systems · II MCA", 6: "Software Engineering lab · I MCA" },
+    Fri: { 2: "Operating Systems · II MCA", 3: "Software Engineering · I MCA", 5: "Operating Systems · II MCA" },
+    Sat: { 1: "Software Engineering · I MCA", 4: "Operating Systems · II MCA" },
+  },
+  Gopika: {
+    Mon: { 2: "Digital Marketing · II MCA", 4: "Web Technology · I MCA", 7: "Digital Marketing · II MCA" },
+    Tue: { 2: "Web Technology · I MCA", 5: "Digital Marketing · II MCA", 7: "Web Technology lab · I MCA", 8: "Digital Marketing · II MCA" },
+    Wed: { 1: "Web Technology · I MCA", 2: "Digital Marketing · II MCA", 7: "Web Technology · I MCA" },
+    Thu: { 3: "Digital Marketing · II MCA", 5: "Web Technology · I MCA", 8: "Digital Marketing · II MCA" },
+    Fri: { 1: "Digital Marketing · II MCA", 2: "Web Technology · I MCA", 7: "Web Technology lab · I MCA" },
+    Sat: { 2: "Digital Marketing · II MCA", 3: "Web Technology · I MCA" },
+  },
 };
 
-const colleagueBusy = {
-  "Mr. Ravi T": { Mon: [1, 2, 5, 6], Tue: [1, 2, 3, 7], Wed: [2, 3, 4, 6], Thu: [1, 2, 4, 6], Fri: [1, 2, 3, 5], Sat: [1, 2] },
-  "Ms. Shalini G": { Mon: [2, 3, 4, 7], Tue: [2, 4, 5, 6], Wed: [1, 2, 5, 7], Thu: [3, 4, 5, 7], Fri: [2, 4, 6, 7], Sat: [3, 4] },
-  "Mr. Karthik R": { Mon: [1, 3, 6, 8], Tue: [1, 2, 3, 5, 8], Wed: [1, 3, 4, 8], Thu: [2, 5, 6, 8], Fri: [1, 4, 5, 8], Sat: [1, 2, 3] },
-};
+// Filled for the signed-in staff member: their own classes, and the
+// periods in which each colleague is teaching.
+const ownClasses = {};
+const colleagueBusy = {};
+
+function loadStaffSamples() {
+  const me = currentUserName();
+  if (!timetableSamples[me]) return;
+  staffInOut.splice(0, staffInOut.length, ...inOutSamples[me]);
+  Object.assign(ownClasses, timetableSamples[me]);
+  Object.keys(timetableSamples).forEach((name) => {
+    if (name === me) return;
+    colleagueBusy[name] = {};
+    Object.keys(timetableSamples[name]).forEach((day) => {
+      colleagueBusy[name][day] = Object.keys(timetableSamples[name][day]).map(Number);
+    });
+  });
+}
 
 // Pick the date, then one of your own periods that day, then a colleague.
 // The colleague list holds only people with no class in that period.
@@ -1753,10 +1821,12 @@ function setUpAlteration() {
       return;
     }
     const names = Object.keys(colleagueBusy);
-    const free = names.filter((name) => !(colleagueBusy[name][date.day] || []).includes(period));
+    const slot = dateField.value + "#" + period;
+    const covering = loadState().covering.filter((item) => item.slot === slot).map((item) => item.name);
+    const free = names.filter((name) => !(colleagueBusy[name][date.day] || []).includes(period) && !covering.includes(name));
     const busy = names.filter((name) => !free.includes(name));
     fill(colleagueField, free.map((name) => [name, name]), free.length ? "Choose a colleague" : "Nobody is free");
-    const busyText = busy.length ? " Teaching then, so not offered: " + busy.join(", ") + "." : "";
+    const busyText = busy.length ? " Teaching or already covering then, so not offered: " + busy.join(", ") + "." : "";
     hint.textContent = free.length
       ? free.length + " of " + names.length + " colleagues are free in period " + period + "." + busyText
       : "Nobody is free in period " + period + " on " + date.label + ". Choose another period, or ask the office." + busyText;
@@ -1797,12 +1867,13 @@ function setUpAlteration() {
       colleagueField.focus();
       return;
     }
-    const slot = "Period " + period + " on " + date.label;
-    if (loadState().requests.some((item) => item.kind === "duty" && item.text.startsWith(slot + " ("))) {
+    const slot = dateField.value + "#" + period;
+    if (loadState().covering.some((item) => item.slot === slot && item.by === currentUserName())) {
       problem.textContent = "That class already has an alteration.";
       return;
     }
-    const text = slot + " (" + ownClasses[date.day][period] + ") goes to " + colleague + ", who is free in that period";
+    const where = "Period " + period + " on " + date.label;
+    const text = where + " (" + ownClasses[date.day][period] + ") goes to " + colleague + ", who is free in that period";
     addRequest("duty", text, null, { date: dateField.value, period, colleague });
     dateField.value = "";
     showPeriods();
@@ -1888,6 +1959,11 @@ function setUpReset() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!guardPage()) return;
+
+  loadStaffSamples();
+  if (document.body.dataset.role === "staff") {
+    setText("staff-who", currentUserName() + " · Assistant Professor, Computer Applications · Sample data");
+  }
 
   // dashboards load the shared records before drawing anything
   const online = await connectBackend();

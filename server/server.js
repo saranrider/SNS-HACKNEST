@@ -53,7 +53,7 @@ const DECISIONS = {
   },
   "project.devi": {
     role: "staff",
-    tell: [["student", "Saran accepted your proposal. You can continue the 2024 face recognition attendance project."]],
+    tell: [["student", "Your guide accepted your proposal. You can continue the 2024 face recognition attendance project."]],
     seenBy: ["student", "staff"],
   },
   "attendance.p5": { role: "staff", tell: [], seenBy: ["staff"] },
@@ -72,7 +72,8 @@ const REQUEST_KINDS = {
   submission: { from: "student", to: "staff", label: "Assignment submission", accepted: "accepted" },
   // anything else goes one step up: to the person's own superior
   general: { toBy: { student: "staff", staff: "coe", coe: "admin", alumni: "admin" }, label: "Request", accepted: "accepted" },
-  duty: { from: "staff", to: "admin", label: "Class alteration", accepted: "approved", alteration: true },
+  // goes to the one colleague who is asked to take the class; the office is told once it is agreed
+  duty: { from: "staff", to: "staff", label: "Class alteration", accepted: "accepted", alteration: true, inform: "admin" },
   certificate: { from: "alumni", to: "admin", label: "Certificate request", accepted: "issued" },
   referral: { from: "alumni", to: "admin", label: "Job referral", accepted: "published", announce: "student" },
   mentoring: { from: "alumni", to: "admin", label: "Mentoring offer", accepted: "published", announce: "student" },
@@ -142,8 +143,16 @@ function createApp(store) {
       tickets: user.role === "admin" ? tickets : tickets.filter((ticket) => ticket.raisedBy === user.name),
       requests: store
         .requests()
-        .filter((item) => item.fromUser === user.id || item.toRole === user.role)
-        .map(({ fromUser, ...rest }) => rest),
+        .filter((item) => item.fromUser === user.id || (item.toUser ? item.toUser === user.id : item.toRole === user.role))
+        .map(({ fromUser, toUser, ...rest }) => rest),
+      // classes colleagues have already agreed to cover, so they are not offered twice
+      covering:
+        user.role === "staff"
+          ? store
+              .requests()
+              .filter((item) => item.slot)
+              .map((item) => ({ slot: item.slot, name: item.toName, by: item.fromName }))
+          : [],
       decisions: store.decisions().filter((key) => DECISIONS[key] && DECISIONS[key].seenBy.includes(user.role)),
       notifications: store.notificationsFor(user.id).map((item) => Object.assign({ to: user.role }, item)),
     };
@@ -159,8 +168,13 @@ function createApp(store) {
         courses: store.courses(),
         odRequests: requests,
         inOut: store.inOutFor(user.id), // their own times only
-        ownClasses: timetable.ownClasses,
-        colleagueBusy: timetable.colleagueBusy,
+        ownClasses: timetable.classesOf(user.id),
+        colleagueBusy: Object.fromEntries(
+          store
+            .usersWithRole("staff")
+            .filter((other) => other.id !== user.id)
+            .map((other) => [other.name, timetable.busyPeriods(other.id)])
+        ),
       };
     }
     if (user.role === "coe") return { courses: store.courses(), odRequests: requests };
@@ -303,13 +317,21 @@ function createApp(store) {
       return res.status(403).json({ error: "Your role cannot send this kind of request." });
     }
     let text = String((req.body && req.body.text) || "").trim();
+    let toUser = null;
+    let slot = null;
     if (rule.alteration) {
       // the class can only go to a colleague who is free in that period
-      const checked = timetable.checkAlteration(req.body.date, req.body.period, req.body.colleague);
-      if (checked.error) return res.status(400).json({ error: checked.error });
-      const taken = store.requests().some((item) => item.kind === kind && item.text.startsWith(checked.slot + " ("));
-      if (taken) return res.status(409).json({ error: "That class already has an alteration." });
+      const colleague = store.findUserByName(String(req.body.colleague || ""));
+      // a slot is spoken for by the one who asked and by the one who was asked
+      const taken = [];
+      for (const item of store.requests().filter((entry) => entry.slot)) {
+        taken.push({ slot: item.slot, userId: item.fromUser }, { slot: item.slot, userId: item.toUser });
+      }
+      const checked = timetable.checkAlteration(req.user, colleague, req.body.date, req.body.period, taken);
+      if (checked.error) return res.status(checked.clash ? 409 : 400).json({ error: checked.error });
       text = checked.text;
+      toUser = colleague;
+      slot = checked.slot;
     }
     if (text.length < 3 || text.length > 300) {
       return res.status(400).json({ error: "Write between 3 and 300 characters." });
@@ -330,11 +352,16 @@ function createApp(store) {
       fromUser: req.user.id,
       fromName: req.user.name,
       toRole,
+      toUser: toUser && toUser.id,
+      toName: toUser && toUser.name,
+      slot,
       raisedAt: new Date().toISOString(),
     };
     store.addRequest(request);
     record(req.user, "request.raise", kind + " " + request.id);
-    notifyRole(toRole, "New " + rule.label.toLowerCase() + " from " + req.user.name + ": " + text);
+    const news = "New " + rule.label.toLowerCase() + " from " + req.user.name + ": " + text;
+    if (toUser) store.addNotification(toUser.id, news);
+    else notifyRole(toRole, news);
     res.status(201).json(publicState(req.user));
   });
 
@@ -342,9 +369,8 @@ function createApp(store) {
     const request = store.findRequest(String((req.body && req.body.id) || ""));
     if (!request) return res.status(404).json({ error: "No request with that ID." });
     const rule = REQUEST_KINDS[request.kind];
-    if (req.user.role !== request.toRole) {
-      return res.status(403).json({ error: "Only " + request.toRole + " can accept this." });
-    }
+    const mine = request.toUser ? request.toUser === req.user.id : req.user.role === request.toRole;
+    if (!mine) return res.status(403).json({ error: "This request was not sent to you." });
     if (rule.needsReady && request.status === "open") {
       const ready = store.approvedStudents().includes(request.fromName) && store.feeStatus(request.fromName) === "paid";
       if (!ready) return res.status(409).json({ error: request.fromName + " is still on hold." });
@@ -353,6 +379,7 @@ function createApp(store) {
       record(req.user, "request.accept", request.kind + " " + request.id);
       if (rule.decision) store.addDecision(rule.decision, req.user.id);
       store.addNotification(request.fromUser, "Your " + rule.label.toLowerCase() + " was " + rule.accepted + " by " + req.user.name + ": " + request.text);
+      if (rule.inform) notifyRole(rule.inform, rule.label + " agreed between " + request.fromName + " and " + req.user.name + ": " + request.text);
       if (rule.announce) notifyRole(rule.announce, "New from the alumni network (" + rule.label.toLowerCase() + "): " + request.text);
     }
     res.json(publicState(req.user));

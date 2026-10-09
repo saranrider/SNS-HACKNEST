@@ -34,7 +34,7 @@
     <main class="content">
       <div class="page-head">
         <h1>Staff dashboard</h1>
-        <p>Saran · Assistant Professor, Computer Applications · Class advisor, II MCA · Sample data</p>
+        <p id="staff-who">Assistant Professor, Computer Applications · Sample data</p>
       </div>
 
       <section class="card overview" aria-label="Overview">
@@ -121,7 +121,7 @@
 
         <section class="card" id="duty">
           <h2>Duty alteration</h2>
-          <p class="sub">When you are on leave, hand a class to a colleague. Only colleagues with no class of their own in that period can be chosen. Approved changes reach salary calculation.</p>
+          <p class="sub">When you are on leave, ask a colleague to take your class. Only colleagues with no class of their own in that period can be chosen. Once they accept, the office is told for salary calculation.</p>
           <form class="form request-form" id="alter-form" novalidate>
             <div class="request-times">
               <div class="field">
@@ -136,9 +136,12 @@
             <label for="alter-colleague">Colleague who is free in that period</label>
             <select id="alter-colleague" disabled><option value="">Choose a period first</option></select>
             <p class="note muted" id="alter-hint" aria-live="polite"></p>
-            <button type="submit" class="btn">Send for approval</button>
+            <button type="submit" class="btn">Ask this colleague</button>
             <p class="text-stop" id="alter-error" role="alert"></p>
           </form>
+          <h3 class="section-label">Colleagues asking you</h3>
+          <div data-inbox="duty" data-empty="Nobody has asked you to take a class." aria-live="polite"></div>
+          <h3 class="section-label">What you have asked</h3>
           <div class="row"><span>Class swap · 9 Oct period 2</span><span class="pill ok">Accepted by colleague</span></div>
           <div data-my-requests="duty" aria-live="polite"></div>
         </section>

@@ -92,7 +92,7 @@ test("reset puts the records back and keeps the users", async () => {
   const staff = await api.login("saran");
   await api.call("POST", "/api/od/approve", { student: "Devi" }, staff);
   const reset = await api.call("POST", "/api/reset", null, staff);
-  assert.deepEqual(reset.body, { odApproved: [], feePaid: false, tickets: [], requests: [], decisions: [], notifications: [] });
+  assert.deepEqual(reset.body, { odApproved: [], feePaid: false, tickets: [], requests: [], covering: [], decisions: [], notifications: [] });
   assert.ok(await api.login("saran"));
   api.stop();
 });
@@ -322,27 +322,58 @@ test("a hall ticket request is issued by the COE only once the student is clear"
 
 test("a class can only be altered to a colleague who is free in that period", async () => {
   const api = await start();
-  const staff = await api.login("saran");
+  const saran = await api.login("saran");
+  const raja = await api.login("raja");
+  const gopika = await api.login("gopika");
   const admin = await api.login("admin");
-  const alter = (date, period, colleague) => api.call("POST", "/api/requests", { kind: "duty", date, period, colleague }, staff);
+  const state = async (token) => (await api.call("GET", "/api/state", null, token)).body;
+  const alter = (token, date, period, colleague) => api.call("POST", "/api/requests", { kind: "duty", date, period, colleague }, token);
 
-  // Monday 12 Oct 2026, period 1: Ravi and Karthik are teaching, Shalini is free
-  const busy = await alter("2026-10-12", 1, "Mr. Ravi T");
+  // Monday 12 Oct 2026, period 1: Raja is teaching, Gopika is free
+  const busy = await alter(saran, "2026-10-12", 1, "Raja");
   assert.equal(busy.status, 400);
-  assert.match(busy.body.error, /Mr. Ravi T has a class in period 1/);
-  assert.equal((await alter("2026-10-12", 2, "Ms. Shalini G")).status, 400, "Saran has no class in period 2 on Monday");
-  assert.equal((await alter("2026-10-11", 1, "Ms. Shalini G")).status, 400, "Sunday");
-  assert.equal((await alter("not a date", 1, "Ms. Shalini G")).status, 400);
-  assert.equal((await alter("2026-10-12", 1, "Someone Else")).status, 400);
+  assert.match(busy.body.error, /Raja has a class in period 1/);
+  assert.equal((await alter(saran, "2026-10-12", 2, "Gopika")).status, 400, "Saran has no class in period 2 on Monday");
+  assert.equal((await alter(saran, "2026-10-11", 1, "Gopika")).status, 400, "Sunday");
+  assert.equal((await alter(saran, "not a date", 1, "Gopika")).status, 400);
+  assert.equal((await alter(saran, "2026-10-12", 1, "Someone Else")).status, 400);
+  assert.equal((await alter(saran, "2026-10-12", 1, "Saran")).status, 400, "not to yourself");
+  assert.equal((await alter(saran, "2026-10-12", 1, "Devi")).status, 400, "not to a student");
+  assert.equal((await alter(saran, "2026-10-13", 2, "Raja")).status, 400, "Tuesday period 2: nobody is free");
+  assert.equal((await alter(saran, "2026-10-13", 2, "Gopika")).status, 400);
 
-  const ok = await alter("2026-10-12", 1, "Ms. Shalini G");
+  const ok = await alter(saran, "2026-10-12", 1, "Gopika");
   assert.equal(ok.status, 201);
-  assert.equal(ok.body.requests[0].text, "Period 1 on Mon 12 Oct 2026 (Database Systems · II MCA) goes to Ms. Shalini G, who is free in that period");
-  assert.equal((await alter("2026-10-12", 1, "Ms. Shalini G")).status, 409, "the same class cannot be altered twice");
+  assert.equal(ok.body.requests[0].text, "Period 1 on Mon 12 Oct 2026 (Database Systems · II MCA) goes to Gopika, who is free in that period");
+  assert.equal((await alter(saran, "2026-10-12", 1, "Gopika")).status, 409, "the same class cannot be altered twice");
 
-  await api.call("POST", "/api/requests/accept", { id: ok.body.requests[0].id }, admin);
-  const after = (await api.call("GET", "/api/state", null, staff)).body;
-  assert.match(after.notifications[0].text, /class alteration was approved by Admin/);
+  // Raja also teaches in period 1 on Monday; Gopika is now covering Saran's class
+  const second = await alter(raja, "2026-10-12", 1, "Gopika");
+  assert.equal(second.status, 400);
+  assert.match(second.body.error, /already covering another class/);
+
+  // only the colleague who was asked sees it and can accept it
+  const id = ok.body.requests[0].id;
+  assert.equal((await state(gopika)).requests.length, 1);
+  assert.match((await state(gopika)).notifications[0].text, /New class alteration from Saran/);
+  assert.equal((await state(raja)).requests.length, 0);
+  assert.equal((await state(raja)).notifications.length, 0);
+  assert.equal((await api.call("POST", "/api/requests/accept", { id }, raja)).status, 403);
+  assert.equal((await api.call("POST", "/api/requests/accept", { id }, admin)).status, 403);
+  assert.equal((await api.call("POST", "/api/requests/accept", { id }, gopika)).status, 200);
+
+  assert.match((await state(saran)).notifications[0].text, /class alteration was accepted by Gopika/);
+  assert.match((await state(admin)).notifications[0].text, /agreed between Saran and Gopika/);
+  api.stop();
+});
+
+test("each staff member has their own timetable and sees who else is teaching", async () => {
+  const api = await start();
+  const raja = (await api.call("GET", "/api/records", null, await api.login("raja"))).body;
+  assert.equal(raja.ownClasses.Mon[1], "Operating Systems · II MCA");
+  assert.deepEqual(Object.keys(raja.colleagueBusy).sort(), ["Gopika", "Saran"]);
+  assert.deepEqual(raja.colleagueBusy.Saran.Mon, [1, 3, 5, 7]);
+  assert.equal(raja.inOut[0].in, "08:35", "Raja gets his own times, not Saran's");
   api.stop();
 });
 
