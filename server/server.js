@@ -73,7 +73,9 @@ const REQUEST_KINDS = {
   // anything else goes one step up: to the person's own superior
   general: { toBy: { student: "staff", staff: "coe", coe: "admin", alumni: "admin" }, label: "Request", accepted: "accepted" },
   // goes to the one colleague who is asked to take the class; the office is told once it is agreed
-  duty: { from: "staff", to: "staff", label: "Class alteration", accepted: "accepted", alteration: true, inform: "admin" },
+  duty: { from: "staff", to: "staff", label: "Class alteration", accepted: "accepted", alteration: true, inform: "admin", declinable: true },
+  // given by the examinations office to one staff member, who accepts or declines it
+  invigilation: { from: "coe", to: "staff", label: "Invigilation duty", accepted: "accepted", invigilation: true, declinable: true },
   certificate: { from: "alumni", to: "admin", label: "Certificate request", accepted: "issued" },
   referral: { from: "alumni", to: "admin", label: "Job referral", accepted: "published", announce: "student" },
   mentoring: { from: "alumni", to: "admin", label: "Mentoring offer", accepted: "published", announce: "student" },
@@ -150,7 +152,7 @@ function createApp(store) {
         user.role === "staff"
           ? store
               .requests()
-              .filter((item) => item.slot)
+              .filter((item) => item.slot && item.status !== "declined")
               .map((item) => ({ slot: item.slot, name: item.toName, by: item.fromName }))
           : [],
       decisions: store.decisions().filter((key) => DECISIONS[key] && DECISIONS[key].seenBy.includes(user.role)),
@@ -324,13 +326,26 @@ function createApp(store) {
       const colleague = store.findUserByName(String(req.body.colleague || ""));
       // a slot is spoken for by the one who asked and by the one who was asked
       const taken = [];
-      for (const item of store.requests().filter((entry) => entry.slot)) {
+      for (const item of store.requests().filter((entry) => entry.slot && entry.status !== "declined")) {
         taken.push({ slot: item.slot, userId: item.fromUser }, { slot: item.slot, userId: item.toUser });
       }
       const checked = timetable.checkAlteration(req.user, colleague, req.body.date, req.body.period, taken);
       if (checked.error) return res.status(checked.clash ? 409 : 400).json({ error: checked.error });
       text = checked.text;
       toUser = colleague;
+      slot = checked.slot;
+    }
+    if (rule.invigilation) {
+      const member = store.findUserByName(String(req.body.staff || ""));
+      const hall = String(req.body.hall || "");
+      const given = store
+        .requests()
+        .filter((item) => item.kind === kind && item.status !== "declined")
+        .map((item) => ({ slot: item.slot, userId: item.toUser, hall: item.text.split("Hall ")[1] }));
+      const checked = timetable.checkInvigilation(member, req.body.date, String(req.body.session || ""), hall, given);
+      if (checked.error) return res.status(checked.clash ? 409 : 400).json({ error: checked.error });
+      text = checked.text;
+      toUser = member;
       slot = checked.slot;
     }
     if (text.length < 3 || text.length > 300) {
@@ -381,6 +396,21 @@ function createApp(store) {
       store.addNotification(request.fromUser, "Your " + rule.label.toLowerCase() + " was " + rule.accepted + " by " + req.user.name + ": " + request.text);
       if (rule.inform) notifyRole(rule.inform, rule.label + " agreed between " + request.fromName + " and " + req.user.name + ": " + request.text);
       if (rule.announce) notifyRole(rule.announce, "New from the alumni network (" + rule.label.toLowerCase() + "): " + request.text);
+    }
+    res.json(publicState(req.user));
+  });
+
+  // The person asked says no; the sender is told so they can ask someone else.
+  app.post("/api/requests/decline", requireUser, (req, res) => {
+    const request = store.findRequest(String((req.body && req.body.id) || ""));
+    if (!request) return res.status(404).json({ error: "No request with that ID." });
+    const rule = REQUEST_KINDS[request.kind];
+    const mine = request.toUser ? request.toUser === req.user.id : req.user.role === request.toRole;
+    if (!mine) return res.status(403).json({ error: "This request was not sent to you." });
+    if (!rule.declinable) return res.status(400).json({ error: "This kind of request cannot be declined." });
+    if (store.declineRequest(request.id, req.user.id) === "done") {
+      record(req.user, "request.decline", request.kind + " " + request.id);
+      store.addNotification(request.fromUser, req.user.name + " declined your " + rule.label.toLowerCase() + ": " + request.text + ". Please choose someone else.");
     }
     res.json(publicState(req.user));
   });

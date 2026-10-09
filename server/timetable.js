@@ -79,4 +79,33 @@ function checkAlteration(asker, colleague, dateValue, periodValue, taken) {
   return { slot, text: where + " (" + own[period] + ") goes to " + colleague.name + ", who is free in that period" };
 }
 
-module.exports = { classes, classesOf, busyPeriods, checkAlteration, readDate };
+// Examination halls and the two sessions of an examination day.
+const HALLS = ["A101", "A102", "A201", "B105"];
+const SESSIONS = { FN: "forenoon", AN: "afternoon" };
+
+// Checks an invigilation duty the examinations office wants to give.
+// "given" lists duties already given and not declined:
+// [{ slot: "inv:2026-10-14#FN", userId, hall }].
+// Returns { error } or { slot, text }.
+function checkInvigilation(member, dateValue, session, hall, given) {
+  const date = readDate(dateValue);
+  if (!date) return { error: "Choose the date of the examination." };
+  if (date.day === "Sun") return { error: "There are no examinations on a Sunday." };
+  if (!Object.prototype.hasOwnProperty.call(SESSIONS, session)) return { error: "Choose forenoon or afternoon." };
+  if (!HALLS.includes(hall)) return { error: "Choose the hall." };
+  if (!member || member.role !== "staff") return { error: "Choose the staff member." };
+  const slot = "inv:" + dateValue + "#" + session;
+  const when = date.label + ", " + SESSIONS[session];
+  if (given.some((item) => item.slot === slot && item.userId === member.id)) {
+    return { error: member.name + " already has an invigilation duty on " + when + ".", clash: true };
+  }
+  if (given.some((item) => item.slot === slot && item.hall === hall)) {
+    return { error: "Hall " + hall + " already has an invigilator on " + when + ".", clash: true };
+  }
+  return { slot, text: "Invigilation · " + when + " · Hall " + hall };
+}
+
+module.exports = {
+  HALLS,
+  SESSIONS,
+  checkInvigilation, classes, classesOf, busyPeriods, checkAlteration, readDate };

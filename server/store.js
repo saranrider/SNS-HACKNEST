@@ -209,7 +209,7 @@ function createStore(file) {
 
     findRequest: (id) =>
       db
-        .prepare("SELECT id, kind, text, from_user AS fromUser, from_name AS fromName, to_role AS toRole, to_user AS toUser, status FROM requests WHERE id = ?")
+        .prepare("SELECT id, kind, text, from_user AS fromUser, from_name AS fromName, to_role AS toRole, to_user AS toUser, slot, status FROM requests WHERE id = ?")
         .get(id) || null,
 
     addRequest: (request) => {
@@ -232,6 +232,13 @@ function createStore(file) {
     acceptRequest: (id, userId) => {
       const result = db
         .prepare("UPDATE requests SET status = 'accepted', decided_by = ? WHERE id = ? AND status = 'open'")
+        .run(userId, id);
+      return result.changes ? "done" : "unchanged";
+    },
+
+    declineRequest: (id, userId) => {
+      const result = db
+        .prepare("UPDATE requests SET status = 'declined', decided_by = ? WHERE id = ? AND status = 'open'")
         .run(userId, id);
       return result.changes ? "done" : "unchanged";
     },

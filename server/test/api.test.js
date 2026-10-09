@@ -390,3 +390,72 @@ test("staff get their own in and out times, and nobody else does", async () => {
   }
   api.stop();
 });
+
+test("the COE gives an invigilation duty to one staff member, who accepts or declines it", async () => {
+  const api = await start();
+  const coe = await api.login("brundha");
+  const saran = await api.login("saran");
+  const raja = await api.login("raja");
+  const admin = await api.login("admin");
+  const state = async (token) => (await api.call("GET", "/api/state", null, token)).body;
+  const give = (token, staff, date, session, hall) => api.call("POST", "/api/requests", { kind: "invigilation", staff, date, session, hall }, token);
+
+  assert.equal((await give(saran, "Raja", "2026-10-14", "FN", "A101")).status, 403, "only the COE gives duties");
+  assert.equal((await give(coe, "Devi", "2026-10-14", "FN", "A101")).status, 400, "only to staff");
+  assert.equal((await give(coe, "Raja", "2026-10-11", "FN", "A101")).status, 400, "Sunday");
+  assert.equal((await give(coe, "Raja", "2026-10-14", "evening", "A101")).status, 400);
+  assert.equal((await give(coe, "Raja", "2026-10-14", "FN", "Z999")).status, 400);
+
+  const given = await give(coe, "Raja", "2026-10-14", "FN", "A101");
+  assert.equal(given.status, 201);
+  assert.equal(given.body.requests[0].text, "Invigilation · Wed 14 Oct 2026, forenoon · Hall A101");
+  assert.equal(given.body.requests[0].toName, "Raja");
+  assert.equal((await give(coe, "Raja", "2026-10-14", "FN", "A102")).status, 409, "one duty per person per session");
+  assert.equal((await give(coe, "Saran", "2026-10-14", "FN", "A101")).status, 409, "one invigilator per hall per session");
+  assert.equal((await give(coe, "Raja", "2026-10-14", "AN", "A101")).status, 201, "the afternoon is a different session");
+
+  // only Raja sees it
+  assert.equal((await state(raja)).requests.length, 2);
+  assert.match((await state(raja)).notifications[0].text, /New invigilation duty from Brundha/);
+  assert.equal((await state(saran)).requests.length, 0);
+  const id = given.body.requests[0].id;
+  assert.equal((await api.call("POST", "/api/requests/accept", { id }, saran)).status, 403);
+  assert.equal((await api.call("POST", "/api/requests/decline", { id }, admin)).status, 403);
+
+  // Raja declines the forenoon: the COE is told and can give it to Saran
+  assert.equal((await api.call("POST", "/api/requests/decline", { id }, raja)).status, 200);
+  assert.match((await state(coe)).notifications[0].text, /Raja declined your invigilation duty/);
+  const again = await give(coe, "Saran", "2026-10-14", "FN", "A101");
+  assert.equal(again.status, 201);
+  await api.call("POST", "/api/requests/accept", { id: again.body.requests.at(-1).id }, saran);
+  assert.match((await state(coe)).notifications[0].text, /invigilation duty was accepted by Saran/);
+  api.stop();
+});
+
+test("a declined class alteration frees the class to be offered to someone else", async () => {
+  const api = await start();
+  const saran = await api.login("saran");
+  const raja = await api.login("raja");
+  const gopika = await api.login("gopika");
+  const alter = (colleague) => api.call("POST", "/api/requests", { kind: "duty", date: "2026-10-12", period: 3, colleague }, saran);
+
+  const first = await alter("Raja");
+  assert.equal((await alter("Gopika")).status, 409);
+  await api.call("POST", "/api/requests/decline", { id: first.body.requests[0].id }, raja);
+  assert.equal((await alter("Gopika")).status, 201);
+  assert.equal((await api.call("POST", "/api/requests/decline", { id: "nothing" }, gopika)).status, 404);
+  api.stop();
+});
+
+test("a campus issue from staff goes to the admin support desk, not to the COE", async () => {
+  const api = await start();
+  const saran = await api.login("saran");
+  const state = async (id) => (await api.call("GET", "/api/state", null, await api.login(id))).body;
+  await api.call("POST", "/api/tickets", { text: "Lab 2 projector not working", owner: "Support desk" }, saran);
+  assert.equal((await state("admin")).tickets.length, 1);
+  assert.match((await state("admin")).notifications[0].text, /New request from Saran: Lab 2 projector/);
+  assert.equal((await state("brundha")).tickets.length, 0);
+  assert.equal((await state("brundha")).notifications.length, 0);
+  assert.equal((await state("raja")).tickets.length, 0);
+  api.stop();
+});

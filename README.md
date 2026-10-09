@@ -47,6 +47,7 @@ All paths except `/api/health` and `/api/login` need the header `Authorization: 
 | `POST /api/fees/pay` | Admin | Body `{ student }`; records that fee as paid |
 | `POST /api/requests` | the role that may ask | Body `{ kind, text }`; asks another role for something: a new OD request, a certificate, a referral to publish, a duty change |
 | `POST /api/requests/accept` | the role it was sent to | Body `{ id }`; accepts it and notifies the sender |
+| `POST /api/requests/decline` | the person it was sent to | Body `{ id }`; declines a class alteration or invigilation duty and tells the sender |
 | `POST /api/decisions` | the role that owns the step | Body `{ key }`; a single-step approval: syllabus approved, marks verified, certificate or hall ticket issued |
 | `POST /api/notifications/read` | signed in | Marks this person's notifications as read |
 | `GET /api/audit` | Admin, COE | The last 50 actions |
