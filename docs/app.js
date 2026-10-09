@@ -184,7 +184,10 @@ function showChange() {
 function startPolling() {
   setInterval(async () => {
     if (actionsInFlight > 0) return;
-    if ((await pullState()) || reloadWaiting) showChange();
+    // redraw only when something changed; a reload that was put off waits
+    // quietly until the person has finished typing
+    if (await pullState()) showChange();
+    else if (reloadWaiting && !midEntry()) window.location.reload();
   }, POLL_MS);
 }
 
@@ -2024,6 +2027,52 @@ function setUpFollowUps(root) {
   });
 }
 
+/* ---------- installed app ---------- */
+
+// Registers the service worker that lets the app open with no connection,
+// and offers "Install this app" on the sign-in page where the browser allows.
+function setUpInstalledApp() {
+  const secure = window.location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  if (secure && "serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => {
+      // the pages work without it; they just need a connection to open
+    });
+  }
+
+  const row = document.getElementById("install-row");
+  if (!row) return;
+  const button = document.getElementById("install-app");
+  const hint = document.getElementById("install-hint");
+  const installed = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  if (installed) return;
+
+  // Chrome, Edge and Android browsers hand over a prompt we can show on a press
+  let prompt = null;
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    prompt = event;
+    row.hidden = false;
+  });
+  button.addEventListener("click", async () => {
+    if (!prompt) return;
+    prompt.prompt();
+    await prompt.userChoice;
+    prompt = null;
+    row.hidden = true;
+  });
+  window.addEventListener("appinstalled", () => {
+    row.hidden = true;
+  });
+
+  // Safari on iPhone and iPad has no such prompt: say where its own option is
+  const apple = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  if (apple) {
+    button.hidden = true;
+    hint.textContent = "To install: press Share, then \u201CAdd to Home Screen\u201D.";
+    row.hidden = false;
+  }
+}
+
 function setUpReset() {
   const button = document.getElementById("reset-demo");
   if (!button) return;
@@ -2057,6 +2106,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   showBackendStatus();
 
   setUpLogin();
+  setUpInstalledApp();
   setUpReset();
   renderOverview();
   setUpFollowUps();
